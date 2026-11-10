@@ -1,0 +1,2252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DA40">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>DA40 Checklists</title>
+<style>
+  :root {
+    --bg: #eceef1; --fg: #111; --card: #fff; --muted: #5f6670; --line: #d4d8de;
+    --accent: #1e5bd8; --accent-fg: #fff; --next: #1e5bd8; --tok: #1752c9; --warnc: #c2410c;
+    --warn-bg: #fff4d6; --warn-fg: #6b4a00; --tile-filter: none;
+    --hl-bg: #fff19a; --hl-fg: #111; --pulse-bg: #ffc93a;
+    --scan-bg: rgba(255, 255, 255, .58); --scan-fg: rgba(17, 34, 68, .78); --scan-line: rgba(30, 91, 216, .28); --scan-cover: rgba(240, 242, 246, .96);
+    --vh: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+  [data-theme="night"] {
+    --bg: #000; --fg: #d6d6d6; --card: #141414; --muted: #8a8a8a; --line: #2a2a2a;
+    --accent: #2c5fbf; --accent-fg: #e8e8e8; --next: #4d8dff; --tok: #7fb0ff; --warnc: #ff9f43;
+    --warn-bg: #2a2100; --warn-fg: #e0b84a; --tile-filter: brightness(.62);
+    --hl-bg: #3d3500; --hl-fg: #f2e27a; --pulse-bg: #6e5c00;
+    --scan-bg: rgba(70, 70, 70, .42); --scan-fg: rgba(230, 230, 230, .8); --scan-line: rgba(255, 255, 255, .18); --scan-cover: rgba(28, 28, 28, .96);
+  }
+  [data-theme="red"] {
+    --bg: #000; --fg: #ff3b2f; --card: #120000; --muted: #d83a2e; --line: #3a0805;
+    --accent: #4a0000; --accent-fg: #ff4a3d; --next: #ff3b2f; --tok: #ff6b5f; --warnc: #ff8a7f;
+    --warn-bg: #2a0000; --warn-fg: #ff6b5f; --tile-filter: none;
+    --hl-bg: #3a0000; --hl-fg: #ff6b5f; --pulse-bg: #6a0c06;
+    --scan-bg: rgba(70, 0, 0, .45); --scan-fg: rgba(255, 74, 61, .85); --scan-line: rgba(255, 59, 47, .3); --scan-cover: rgba(30, 0, 0, .96);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); }
+  body {
+    font: 20px/1.3 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    touch-action: manipulation; -webkit-text-size-adjust: 100%;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  /* Day theme: a dark band so the white status-bar clock stays readable in the Home Screen app. */
+  [data-theme="day"] body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: #1b1d21; z-index: 60; pointer-events: none; }
+  button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; touch-action: manipulation; }
+  input, textarea { font: inherit; -webkit-user-select: text; user-select: text; }
+  .wrap { padding: 16px; max-width: 1100px; margin: 0 auto; }
+  .warn { color: var(--warnc) !important; font-weight: 900; }
+
+  /* ---------- Home & group screens ---------- */
+  /* Full-height screens subtract the safe areas that body already pads for. */
+  .home, .page { height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  .home { display: flex; flex-direction: column; padding: 14px 16px 16px; }
+  .home-head { display: flex; align-items: center; margin: 0 0 14px; flex: none; }
+  .home-head > * + * { margin-left: 12px; }
+  .home-head .next-tile { min-height: 76px; min-width: 130px; flex: none; }
+  .home-head h1 { flex: 1; min-width: 0; margin-top: 0; margin-bottom: 0; font-size: 30px; font-weight: 800; letter-spacing: -.5px; }
+  .home-head h1:not(.group-title) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .small-btn {
+    min-height: 56px; padding: 0 18px; border-radius: 14px; font-size: 19px; font-weight: 700; flex: none;
+    background: var(--card); border: 1px solid var(--line); color: var(--fg);
+  }
+  button.banner { display: block; width: 100%; text-align: left; font: inherit; font-size: 15px; font-weight: 700; color: var(--warn-fg); }
+  .banner { flex: none; margin: 0 0 12px; padding: 8px 12px; border-radius: 12px; background: var(--warn-bg); color: var(--warn-fg); font-size: 15px; font-weight: 700; }
+  .tiles { flex: 1; min-height: 0; display: grid; grid-gap: 14px; overflow-y: auto; }
+  .tile {
+    min-height: 0; min-width: 0; border-radius: 22px; padding: 10px 14px; text-align: center;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; line-height: 1.12; overflow-wrap: normal; word-break: normal; hyphens: manual;
+    filter: var(--tile-filter); box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    transition: transform .08s;
+  }
+  .tile .tl { display: block; max-width: 100%; }
+  .tiles.anywhere .tile { overflow-wrap: anywhere; }
+  .tile:active, .home-tile:active, .next-tile:active, .choice:active, .emerg-tile:active { transform: scale(.97); }
+  [data-theme="red"] .tile { background: #1a0000 !important; color: var(--fg); border: 2px solid #5a0d08; box-shadow: none; }
+  .empty-msg { padding: 40px 10px; text-align: center; color: var(--muted); }
+
+  /* ---------- Checklist page ---------- */
+  .page { display: flex; flex-direction: column; }
+  .bar { flex: none; display: flex; padding: 12px 16px; border-bottom: 2px solid var(--line); }
+  .bar > * + * { margin-left: 12px; }
+  .home-tile, .next-tile {
+    min-height: 92px; border-radius: 20px; padding: 0 22px; font-size: 30px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .home-tile { min-width: 190px; background: var(--accent); color: var(--accent-fg); }
+  .home-tile svg { width: 36px; height: 36px; flex: none; margin-right: 10px; }
+  .next-tile {
+    min-width: 150px; max-width: 34%; background: var(--card); border: 2px solid var(--line);
+    font-size: 22px; flex-direction: column; line-height: 1.15;
+  }
+  .next-tile small { font-size: 15px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .next-tile span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; line-height: 1.1; -webkit-box-orient: vertical; text-align: center; max-width: 100%; }
+  .bar .spacer { flex: .0001 1 0; }   /* tiles grow first (up to their max); the spacer takes any leftover */
+  .bar .next-tile { flex: 1 1 0; min-width: 0; max-width: 230px; padding: 0 12px; font-size: 20px; }
+  .bar .next-tile small { font-size: 14px; }
+  .bar .home-tile { min-width: 160px; padding: 0 18px; font-size: 27px; }
+  .home-head .home-tile { min-height: 76px; min-width: 170px; font-size: 26px; flex: none; }
+  .list-title { flex: none; margin: 0; padding: 10px 16px 0; text-align: center; font-size: 30px; font-weight: 850; line-height: 1.15; }
+  .emer .list-title { color: #c62828; }
+  [data-theme="night"] .emer .list-title { color: #e0554d; }
+  [data-theme="red"] .emer .list-title { color: var(--fg); }
+  .list-sub { flex: none; margin: 0; padding: 2px 16px 0; text-align: center; font-size: 26px; font-weight: 850; line-height: 1.15; letter-spacing: .04em; }
+  .list-sub small { display: block; font-size: 15px; font-weight: 650; letter-spacing: .02em; opacity: .85; }
+  .emer .list-sub { color: #c62828; }
+  [data-theme="night"] .emer .list-sub { color: #e0554d; }
+  [data-theme="red"] .emer .list-sub { color: var(--fg); }
+  .group-title { font-size: 34px !important; }
+  /* Chart pages: HOME, Back and Previous / Next stay on screen while the chart scrolls; the title is below them */
+  .chart-head { position: -webkit-sticky; position: sticky; top: 0; z-index: 3; background: var(--bg); border-bottom: 2px solid var(--line);
+    margin: calc(-16px - env(safe-area-inset-top)) -16px 10px; padding: calc(16px + env(safe-area-inset-top)) 16px 10px; }
+  .chart-head .spacer { flex: 1 1 0; min-width: 0; }
+  .chart-head .chart-nav { flex: 0 1 200px; min-width: 0; max-width: none; padding: 0 12px; font-size: 22px; }
+  .chart-head .nav-ph { visibility: hidden; }
+  .chart-title { margin: 0 0 8px; line-height: 1.15; font-weight: 800; }
+  .fit { flex: 1; min-height: 0; overflow: hidden; padding: 10px 16px 14px; position: relative; }
+  .fit.scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .sheet { column-gap: 1.4em; column-rule: 2px solid var(--line); margin: 0 auto; }
+  .row {
+    display: flex; align-items: baseline; padding: var(--rp, .22em) .4em; border-radius: .25em;
+    break-inside: avoid; font-weight: 600;
+  }
+  .row:nth-child(even of .row) { background: var(--card); }
+  .row .c { flex: none; white-space: nowrap; }
+  .row .lead { margin: 0 .35em; flex: 1 1 .8em; min-width: .8em; border-bottom: .12em dotted var(--muted); opacity: .6; transform: translateY(-.25em); }
+  .row .r { flex: none; white-space: nowrap; font-weight: 850; text-align: right; }
+  /* When lines are too long for one row, both sides shrink in proportion and wrap evenly. */
+  .sheet.wrapr .row .c, .sheet.wrapr .row .r { flex: 0 1 auto; white-space: normal; }
+  .sheet.wrapr .row { align-items: center; }
+  .sheet.wrapr .row .lead { transform: none; }
+  .row.text .c { flex: 1 1 auto; white-space: normal; font-weight: 500; }
+  /* (kept separate from the zebra rule so browsers without ":nth-child(... of S)" still highlight) */
+  .row.hl { background: var(--hl-bg); color: var(--hl-fg); }
+  .row.hl:nth-child(even of .row) { background: var(--hl-bg); }
+  [data-theme="red"] .row.hl { font-weight: 850; box-shadow: inset .3em 0 0 var(--fg); }
+  .row.pulse { background: var(--hl-bg); color: var(--hl-fg); font-weight: 850; animation: pulse 1.8s ease-in-out infinite; }
+  .row.pulse:nth-child(even of .row) { background: var(--hl-bg); }
+  @keyframes pulse { 0%, 100% { background-color: var(--hl-bg); } 50% { background-color: var(--pulse-bg); } }
+  .sec {
+    font-size: .72em; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+    padding: calc(.5em + var(--rp, .22em)) .55em .25em; break-after: avoid; break-inside: avoid;
+  }
+  .sec:first-child { padding-top: 0; }
+  .note {
+    margin: .2em 0 .35em; padding: .35em .5em; border-radius: .3em; background: var(--warn-bg); color: var(--warn-fg);
+    font-size: .8em; font-weight: 700; break-inside: avoid;
+  }
+  .tbl { width: 100%; border-collapse: collapse; break-inside: avoid; margin: .2em 0 .4em; table-layout: fixed; }
+  .tbl th, .tbl td { padding: .15em .35em; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .tbl td { padding: calc(var(--rp, .22em) * .7) .35em; }   /* spare height becomes row spacing, as in checklists */
+  .tbl th { font-size: .72em; font-weight: 850; color: var(--muted); text-transform: uppercase; line-height: 1.15; white-space: normal; }
+  .tbl td { font-weight: 750; }
+  .tbl td:first-child { font-weight: 850; text-align: left; }
+  .sheet:not(.two) .tbl + .tbl { margin-top: -.4em; }
+  .sheet:not(.two) .tbl + .tbl tr:first-child { display: none; }
+  .tbl tr:nth-child(even) td { background: var(--card); }
+  .choices { flex: none; display: flex; padding: 0 16px 16px; }
+  .choices > * + * { margin-left: 14px; }
+  .fit > .choices { padding: 14px 0 6px; }
+  .choice {
+    flex: 1 1 0; min-width: 0; min-height: 100px; border-radius: 20px; padding: 10px 12px; color: #fff;
+    font-size: 34px; font-weight: 850; letter-spacing: 1px; line-height: 1.1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    filter: var(--tile-filter); box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+  .choice small { font-size: 15px; font-weight: 600; letter-spacing: 0; opacity: .9; margin-top: 6px; }
+  .choice.c0 { background: #1e5bd8; } .choice.c1 { background: #b45309; } .choice.c2 { background: #138a4a; } .choice.c3 { background: #6b3fc7; }
+  [data-theme="red"] .choice { background: #1a0000 !important; color: var(--fg); border: 2px solid #5a0d08; box-shadow: none; }
+  .choice.missing, [data-theme="red"] .choice.missing { background: var(--card) !important; color: var(--muted); border: 2px dashed var(--line); box-shadow: none; }
+  .more-cue { position: -webkit-sticky; position: sticky; bottom: -14px; margin: 0 -16px -14px; padding: 26px 0 10px; text-align: center; pointer-events: none;
+    background: linear-gradient(to bottom, rgba(0,0,0,0), var(--bg) 60%); }
+  .more-cue span { display: inline-block; background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 6px 18px; font-size: 16px; font-weight: 850; }
+  .more-cue.gone { display: none; }
+  /* Emergency scan reminder: a light banner that fades in and out; taps pass straight through. */
+  .scan {
+    position: fixed; left: 0; top: 0; z-index: 40; pointer-events: none; opacity: 0;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    padding: 2px 10px; border-radius: 14px; text-align: center; white-space: normal;
+    background: var(--scan-bg); color: var(--scan-fg); border: 2px solid var(--scan-line);
+    font-size: 24px; font-weight: 850; letter-spacing: .5px; line-height: 1.15;
+    animation: scan 6s ease-in-out 3s infinite;
+  }
+  .scan.intitle { background: var(--scan-cover); white-space: nowrap; animation-name: scanCover; }
+  @keyframes scanCover { 0% { opacity: 0; } 6% { opacity: 1; } 28% { opacity: 1; } 36% { opacity: 0; } 100% { opacity: 0; } }
+  @keyframes scan { 0% { opacity: 0; } 6% { opacity: .85; } 28% { opacity: .85; } 36% { opacity: 0; } 100% { opacity: 0; } }
+
+  /* ---------- Flight data tokens, wind line, footer ---------- */
+  .fv { color: var(--tok); border-bottom: .09em solid currentColor; padding: 0 .08em; font-weight: 850; }
+  .fv.empty { opacity: .75; }
+  .fv.warn { color: var(--warnc); }
+  [data-theme="red"] .fv { border-bottom-width: .14em; }
+  .row.hl .fv { color: #0b3fa8; }
+  [data-theme="night"] .row.hl .fv { color: #9cc3ff; }
+  [data-theme="red"] .row.hl .fv { color: var(--fg); }
+  .row.tap { cursor: pointer; }
+  .row.tap:active { opacity: .6; }
+  .wx {
+    flex: none; display: flex; align-items: center; width: auto; margin: 0 16px 12px; padding: 10px 14px; border-radius: 14px;
+    background: var(--card); border: 2px solid var(--line); font-size: 19px; font-weight: 700; text-align: left;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .wx b { color: var(--next); }
+  .wx-key { flex: 0 1 auto; min-width: 0; white-space: normal; margin-left: .3em; }
+  .wx-xw { font-weight: 850; }
+  .wx-rest { flex: 1 1 0; min-width: 0; margin-left: .3em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+  .wx.empty { border-style: dashed; border-color: var(--next); color: var(--next); }
+  .wx.empty .wx-rest { color: inherit; }
+  .home .wx { margin: 14px 0 0; }
+  .foot { flex: none; display: flex; align-items: stretch; margin: 0 16px 12px; }
+  .home .foot { margin: 14px 0 0; }
+  .foot .wx { flex: 1 1 auto; min-width: 0; margin: 0 12px 0 0; }
+  .emerg-tile {
+    flex: none; margin-left: auto; min-height: 60px; padding: 0 20px; border-radius: 14px;
+    background: #c62828; color: #fff; font-size: 22px; font-weight: 850; letter-spacing: .5px;
+    filter: var(--tile-filter); box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+  [data-theme="red"] .emerg-tile { background: #3a0000; color: var(--fg); border: 2px solid #8a1a14; box-shadow: none; }
+  .wrap.data { display: flex; flex-direction: column; min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  .wrap.data .data-foot { margin-top: auto; }
+  .data-foot { position: -webkit-sticky; position: sticky; bottom: 0; padding: 10px 0 calc(12px + env(safe-area-inset-bottom)); margin-bottom: calc(-1 * env(safe-area-inset-bottom)); background: var(--bg); }
+  .data-foot .foot { margin: 0; }
+  .dsec { margin: 0 0 18px; }
+  .dsec-head { display: flex; align-items: center; margin: 4px 0 10px; }
+  .dsec-head h2 { flex: 1; min-width: 0; margin: 0; font-size: 24px; font-weight: 850; }
+  .dsec-head .small-btn { margin-left: 10px; }
+  .field .val small { white-space: nowrap; }
+  .small-btn.go { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+  .pmeta { color: var(--muted); font-size: 15px; font-weight: 600; margin: 4px 0 10px; line-height: 1.4; }
+  .pmeta b { color: var(--fg); }
+  .ok { color: #138a4a; }
+  [data-theme="red"] .ok { color: var(--fg); }
+  .link { display: inline-block; vertical-align: middle; color: var(--next); font-weight: 800; text-decoration: underline; padding: 0 6px; min-height: 44px; min-width: 44px; line-height: 44px; }
+  .prow { display: flex; align-items: center; padding: 10px 12px; margin: 0 0 8px; background: var(--card); border: 2px solid var(--line); border-radius: 14px; }
+  .prow > * + * { margin-left: 10px; }
+  .plab { flex: 1 1 auto; min-width: 0; font-weight: 750; font-size: 18px; }
+  .pnote { display: block; color: var(--muted); font-size: 14px; font-weight: 600; margin-top: 2px; }
+  .pval { flex: none; text-align: right; font-size: 26px; font-weight: 850; color: var(--tok); }
+  .pval small { display: block; font-size: 14px; font-weight: 700; color: var(--muted); }
+  .pval small.ok, .pval small .ok { color: #138a4a; } .pval small .warn { color: var(--warnc); }
+  [data-theme="red"] .pval small.ok, [data-theme="red"] .pval small .ok, [data-theme="red"] .pmeta.ok { color: var(--fg); }
+  [data-theme="red"] .seg button.on, [data-theme="red"] .key.on { background: #ff3b2b; color: #000; }
+  .field span .why { font-size: 18px; font-weight: 800; }
+  .field span.val.warn { color: var(--warnc); }
+  .fit.scroll { overflow-x: hidden; }
+  .seg { display: flex; flex: none; }
+  .seg button { min-height: 50px; min-width: 50px; padding: 0 14px; border: 2px solid var(--line); background: var(--bg); font-weight: 800; font-size: 16px; }
+  .seg button:first-child { border-radius: 12px 0 0 12px; } .seg button:last-child { border-radius: 0 12px 12px 0; } .seg button + button { margin-left: -2px; }
+  .seg button.on { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+  .wbt { width: 100%; border-collapse: collapse; margin: 6px 0 10px; font-size: 16px; }
+  .wbt th { text-align: right; color: var(--muted); font-size: 13px; text-transform: uppercase; padding: 6px 8px; }
+  .wbt td { text-align: right; padding: 6px 8px; border-top: 1px solid var(--line); font-weight: 650; }
+  .wbt th:first-child, .wbt td:first-child { text-align: left; }
+  .wbt tr.tot td { font-weight: 850; background: var(--card); }
+  .wbt tr.sub td { font-weight: 650; font-style: italic; color: var(--muted); border-top: 1px dashed var(--line); }
+  .wbt tr.sub td:first-child { padding-left: 20px; }
+  .flags { list-style: none; padding: 0; margin: 0 0 10px; }
+  .flags li { padding: 7px 10px; margin: 0 0 6px; border-radius: 10px; font-weight: 750; font-size: 16px; background: var(--card); }
+  .flags li.good { color: #138a4a; } .flags li.bad { color: #fff; background: #c62828; }
+  [data-theme="red"] .flags li.good { color: var(--fg); } [data-theme="red"] .flags li.bad { background: #3a0000; color: var(--fg); border: 2px solid #8a1a14; }
+  .cg-plot { width: 100%; height: auto; display: block; background: var(--card); border: 2px solid var(--line); border-radius: 14px; margin-bottom: 8px; }
+  .cg-grid { stroke: var(--line); stroke-width: 1; } .cg-tick { fill: var(--muted); font-size: 17px; font-weight: 650; }
+  .cg-env { fill: rgba(19, 138, 74, .14); stroke: #138a4a; stroke-width: 2.5; } .cg-mlw { stroke: #b45309; stroke-width: 2; stroke-dasharray: 6 5; }
+  [data-theme="red"] .cg-env { fill: rgba(255, 80, 60, .1); stroke: var(--fg); } [data-theme="red"] .cg-mlw { stroke: var(--fg); }
+  .cg-burn { stroke: var(--tok); stroke-width: 2.5; } .cg-pt { fill: var(--tok); } .cg-lab { fill: var(--fg); font-size: 17px; font-weight: 850; }
+  .arrd summary { cursor: pointer; font-weight: 750; color: var(--next); padding: 12px 0 14px; min-height: 44px; }
+  .chartbox { position: relative; background: #fff; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+  .chartbox img { display: block; width: 100%; height: auto; filter: var(--tile-filter); }
+  /* night: the white scan inverted to light lines on black; red: dim red lines on black, the reading in bright red */
+  [data-theme="night"] .chartbox, [data-theme="red"] .chartbox { background: #000; }
+  [data-theme="night"] .chartbox img { filter: invert(.9) hue-rotate(180deg); }
+  [data-theme="red"] .chartbox img { filter: invert(1) brightness(.6); }
+  .chartin { position: relative; }
+  [data-theme="red"] .chartbox:not(.clean) .chartin::after { content: ''; position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: #ff0000; mix-blend-mode: multiply; pointer-events: none; z-index: 1; }
+  [data-theme="red"] .chartbox .pc-svg { z-index: 2; }
+  [data-theme="red"] .pc-svg .pc-path, [data-theme="red"] .pc-svg .pc-input, [data-theme="red"] .pc-svg .pc-ceil { stroke: #ff3b2b !important; }
+  [data-theme="red"] .pc-svg .pc-dot, [data-theme="red"] .pc-svg .pc-label { fill: #ff3b2b !important; }
+  .pad-err { color: var(--warnc); font-weight: 800; font-size: 17px; margin-top: 4px; }
+  .wbt.rng td small { display: block; font-size: 13px; font-weight: 650; color: var(--muted); }
+  .wbt.rng tr.sel td { background: var(--hl-bg); }
+  [data-theme="night"] .wbt.rng tr.sel td small { color: #d0d0d0; } [data-theme="red"] .wbt.rng tr.sel td small { color: #ff9a90; }
+  .chartbox.clean { background: var(--card); padding: 4px 2px; }
+
+  .chartbox .pc-clean { display: block; width: 100%; height: auto; }
+  [data-theme="night"] .pc-svg .pc-path, [data-theme="night"] .pc-svg .pc-input, [data-theme="night"] .pc-svg .pc-ceil,
+  [data-theme="night"] .pc-clean .pc-path, [data-theme="night"] .pc-clean .pc-input, [data-theme="night"] .pc-clean .pc-ceil { stroke: #ff5a4f !important; }
+  [data-theme="night"] .pc-dot, [data-theme="night"] .pc-tag rect { fill: #e0352b !important; }
+  [data-theme="night"] .pc-mid rect { fill: #000 !important; stroke: #ff5a4f !important; } [data-theme="night"] .pc-mid text { fill: #ff8a80 !important; }
+  [data-theme="red"] .pc-clean .pc-path, [data-theme="red"] .pc-clean .pc-input, [data-theme="red"] .pc-clean .pc-ceil { stroke: #ff3b2b !important; }
+  [data-theme="red"] .pc-clean .pc-curve, [data-theme="red"] .pc-clean .pc-frame, [data-theme="red"] .pc-clean .pc-guide, [data-theme="red"] .pc-xcurve { stroke: #9a2a20 !important; }
+  [data-theme="red"] .pc-clean .pc-grid { stroke: #3a0d08 !important; }
+  [data-theme="red"] .pc-tag rect { fill: #ff3b2b !important; } [data-theme="red"] .pc-tag text { fill: #000 !important; }
+  [data-theme="red"] .pc-mid rect { fill: #000 !important; stroke: #ff3b2b !important; } [data-theme="red"] .pc-mid text { fill: #ff3b2b !important; }
+  [data-theme="red"] .pc-dot { fill: #ff3b2b !important; }
+  [data-theme="red"] .pc-ceiltag rect, [data-theme="night"] .pc-ceiltag rect { fill: #000 !important; stroke: #ff5a4f; stroke-width: 3px; }
+  [data-theme="red"] .pc-ceiltag text, [data-theme="night"] .pc-ceiltag text { fill: #ff6a5e !important; }
+  .chartbox .pc-svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+  .chartbox { isolation: isolate; z-index: 0; }   /* its layers stay below the EMERGENCY bar */
+  .calc { background: var(--card); border: 2px solid var(--line); border-radius: 16px; padding: 12px 16px; font-size: 28px; font-weight: 850; margin: 0 0 12px; text-align: center; line-height: 1.25; }
+  .calc small { display: block; font-size: 15px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-gap: 10px; }
+  .field { min-height: 84px; border-radius: 14px; background: var(--card); border: 2px solid var(--line); text-align: left; padding: 8px 14px; min-width: 0; }
+  .field small { display: block; font-size: 14px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .field span { font-size: 30px; font-weight: 850; color: var(--tok); }
+  .field span.blank { color: var(--muted); font-weight: 600; font-size: 22px; }
+  .field .val { display: block; overflow-wrap: break-word; word-wrap: break-word; }
+  .field span small { display: inline; color: var(--muted); font-size: 16px; }
+
+  /* ---------- Keypad sheet ---------- */
+  #pad { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 50; background: rgba(0,0,0,.5);
+    display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-top: env(safe-area-inset-top);
+    overscroll-behavior: contain; touch-action: none; }
+  #pad .sheet2 {
+    width: 100%; max-width: 760px; max-height: 100%; display: flex; flex-direction: column;
+    background: var(--bg); border-radius: 22px 22px 0 0; border-top: 2px solid var(--line);
+    padding: 12px calc(16px + env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+  }
+  .sheet2:focus { outline: none; }
+  [data-theme="night"] #pad, [data-theme="red"] #pad { background: rgba(0,0,0,.72); }
+  [data-theme="night"] #pad .sheet2 { background: var(--card); border-top-color: #5a5a5a; }
+  [data-theme="red"] #pad .sheet2 { background: var(--card); border-top-color: #8a1a14; }
+  .pad-head { flex: none; }
+  .pad-mid { flex: 1 1 auto; min-height: 0; position: relative; display: flex; flex-direction: column; }
+  .pad-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
+  .pad-cue { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 0 2px; text-align: center; pointer-events: none; display: none;
+    background: linear-gradient(to bottom, rgba(0,0,0,0), var(--bg) 70%); font-size: 13px; font-weight: 850; color: var(--next); letter-spacing: .5px; }
+  .pad-mid.more .pad-cue { display: block; }
+  .pad-step { display: flex; align-items: center; font-size: 15px; font-weight: 700; color: var(--muted); }
+  .pad-step span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pad-label { font-size: 36px; font-weight: 900; text-align: center; text-transform: uppercase; letter-spacing: .5px; line-height: 1.1; margin: 4px 0 2px; }
+  .pad-val { font-size: 52px; font-weight: 850; text-align: center; min-height: 70px; line-height: 70px; color: var(--tok); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .pad-val .was { color: var(--muted); font-weight: 600; font-size: 38px; }
+  .pad-val .unit { font-size: 24px; color: var(--muted); margin-left: 8px; }
+  .keys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-gap: 10px; }
+  .keys .key { min-width: 0; padding: 0; overflow: hidden; }
+  .key { min-height: 70px; border-radius: 16px; background: var(--card); border: 2px solid var(--line); font-size: 32px; font-weight: 800; }
+  .key.on { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+  .key.big { grid-column: 1 / -1; min-height: 84px; font-size: 40px; background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+  .key.span2 { grid-column: span 2; }
+  .keys.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .key.ref { font-size: 18px; min-height: 52px; }
+  .pad-note { text-align: center; font-size: 17px; font-weight: 750; color: var(--muted); margin-top: 2px; }
+  .key:active, .pad-act button:active { transform: scale(.96); }
+  .keys + .keys { margin-top: 10px; }
+  .pad-act { flex: none; display: flex; margin-top: 10px; }
+  .pad-act > * + * { margin-left: 10px; }
+  .pad-act button { flex: 1 1 0; min-width: 0; min-height: 70px; border-radius: 16px; font-size: 25px; font-weight: 850; background: var(--card); border: 2px solid var(--line); }
+  .pad-act button:disabled { opacity: .35; }
+  .pad-act .go { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+  .shake { animation: shake .3s; }
+  @keyframes shake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+
+  /* Tall-ish but not tall screens (iPad landscape, laptops): compact keypad so Back/Done/Next stay on screen. */
+  @media (max-height: 820px) {
+    .key { min-height: 56px; font-size: 28px; }
+    .pad-act button { min-height: 58px; }
+    .pad-label { font-size: 30px; }
+    .pad-val { font-size: 44px; min-height: 56px; line-height: 56px; }
+  }
+
+  @media (orientation: landscape) and (min-width: 1000px) and (min-height: 600px) {
+    #pad .sheet2 { max-width: 1000px; }
+  }
+
+  /* Phone-width screens: let the top tiles share the width instead of running off screen. */
+  @media (max-width: 600px) {
+    .home { padding: 10px 12px 12px; }
+    .home-head > * + * { margin-left: 8px; }
+    .home-head h1 { font-size: 24px; }
+    .small-btn { min-height: 50px; padding: 0 12px; font-size: 16px; }
+    .home-head .group-title { font-size: 26px !important; }
+    .dsec-head { flex-wrap: wrap; }
+    .dsec-head h2 { flex: 1 0 100%; margin-bottom: 8px; font-size: 21px; }
+    .dsec-head .small-btn { margin: 0 10px 0 0; }
+    .key.big.same { font-size: 20px; }
+    .prow { flex-wrap: wrap; } .prow .pval { margin-left: auto; flex: 0 1 auto; max-width: 100%; } .pval small { white-space: normal; } .prow .seg { margin-left: 0; margin-top: 6px; }
+    .cg-tick, .cg-lab { font-size: 24px; }
+    .chartbox { overflow-x: auto; -webkit-overflow-scrolling: touch; } .chartin { min-width: 660px; }
+    .pval { font-size: 22px; }
+    .seg button { padding: 0 10px; font-size: 14px; }
+    .wbt { font-size: 14px; }
+    #pad .sheet2 { padding: 10px calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left)); }
+    .pad-label { font-size: 26px; }
+    .pad-step { font-size: 13px; }
+    .pad-val { font-size: 40px; min-height: 52px; line-height: 52px; }
+    .keys { grid-gap: 6px; }
+    .keys + .keys { margin-top: 6px; }
+    .key { min-height: 50px; font-size: 25px; border-radius: 12px; }
+    .key.big { min-height: 64px; font-size: 32px; }
+    .pad-act { margin-top: 8px; }
+    .pad-act button { min-height: 52px; font-size: 20px; }
+    .emerg-tile { padding: 0 12px; font-size: 17px; letter-spacing: 0; min-height: 52px; }
+    /* every wind line (footer or not): runway + components only, wrapping if needed */
+    .wx { font-size: 16px; padding: 8px 10px; display: block; white-space: normal; line-height: 1.25; }
+    .wx-key { white-space: normal; margin-left: 0; }
+    .wx-rest { display: none; }
+    .wx.empty .wx-rest { display: inline; white-space: normal; }
+    .foot .wx { margin-right: 8px; }
+    .bar { padding: 8px 10px; }
+    .bar > * + * { margin-left: 8px; }
+    .home-tile, .next-tile { min-height: 66px; }
+    .home-tile { min-width: 0; padding: 0 16px; font-size: 24px; }
+    .home-tile svg { width: 28px; height: 28px; margin-right: 8px; }
+    .next-tile, .bar .next-tile { min-width: 0; flex: 1 1 0; max-width: none; font-size: 16px; padding: 0 6px; }
+    .bar .next-tile small { font-size: 11px; letter-spacing: 0; }
+    .bar .home-tile, .home-head .home-tile { min-width: 66px; padding: 0 10px; flex: none; }
+    .bar .home-tile span, .home-head .home-tile span { display: none; }            /* house icon only on phones */
+    .bar .home-tile svg, .home-head .home-tile svg { width: 36px; height: 36px; margin-right: 0; }
+    .bar .spacer { display: none; }
+    .home-head .next-tile { min-width: 0; flex: 1 1 0; min-height: 66px; }
+    .home-head.with-back { flex-wrap: wrap; }
+    .home-head.with-back h1 { flex: 1 0 100%; margin: 8px 0 0 !important; }
+    .home-head.with-back h1 { order: 9; }   /* title on its own row below Home / Back / Next */
+    .chart-head { padding-left: 10px; padding-right: 10px; padding-bottom: 8px; }
+    .chart-head .spacer { display: none; }
+    .chart-head .chart-nav { flex: 1 1 0; font-size: 16px; padding: 0 6px; }
+    .chart-head .home-tile { min-height: 66px; }
+    .chart-head .next-tile small { font-size: 11px; letter-spacing: 0; }
+    .chart-title { font-size: 24px !important; }
+    .list-title { font-size: 22px; padding-top: 6px; }
+    .list-sub { font-size: 19px; } .list-sub small { font-size: 13px; }
+    .choice { min-height: 70px; font-size: 26px; }
+    .choice small { font-size: 13px; margin-top: 2px; }
+    .small-btn .lbl { display: none; }
+    .fit { padding: 8px 12px 10px; }
+  }
+
+  /* Short screens (iPhone landscape): compact chrome so the checklist keeps most of the height. */
+  @media (max-height: 500px) {
+    .bar { padding: 6px 12px; }
+    .home-tile, .next-tile { min-height: 54px; }
+    .bar .home-tile span, .home-head .home-tile span { display: none; }
+    .bar .home-tile, .home-head .home-tile { min-width: 66px; padding: 0 10px; }
+    .home-tile svg { margin-right: 0; }
+    .list-title { font-size: 20px; padding-top: 4px; }
+    .list-sub { font-size: 17px; } .list-sub small { font-size: 12px; }
+    .choice { min-height: 56px; font-size: 22px; }
+    .choice small { display: none; }
+    .emerg-tile { min-height: 44px; font-size: 16px; }
+    .wx { padding: 6px 10px; font-size: 16px; }
+    .foot { margin-bottom: 6px; }
+    .home { padding-top: 6px; }
+    .home-head { margin-bottom: 8px; }
+    .home-head .home-tile, .home-head .next-tile { min-height: 54px; }
+    .chart-head { padding-top: calc(6px + env(safe-area-inset-top)); padding-bottom: 6px; }
+    .key { min-height: 42px; font-size: 22px; }
+    .pad-label { font-size: 22px; }
+    .pad-val { font-size: 32px; min-height: 40px; line-height: 40px; }
+    .pad-act button { min-height: 46px; font-size: 19px; }
+    .keys.num { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .key.big { min-height: 44px; font-size: 22px; }
+    .fit { padding: 4px 12px 6px; }
+    .choices { padding-bottom: 6px; }
+    .wx { margin-bottom: 6px; }
+    .pad-label { margin: 0; }
+    .pad-val { min-height: 36px; line-height: 36px; font-size: 28px; }
+  }
+
+  /* very narrow phones (iPhone SE 1st gen): smaller header so the title fits */
+  @media (max-width: 360px) {
+    .home-head h1 { font-size: 17px; }
+    .small-btn { padding: 0 8px; font-size: 14px; }
+    .choice { font-size: 20px; letter-spacing: 0; }
+    .tbl { font-size: .85em; }
+    .tbl th, .tbl td { padding: .2em .12em; }
+  }
+
+
+  /* ---------- Edit ---------- */
+  .edit-row {
+    display: flex; align-items: center; padding: 10px 12px; margin: 8px 0;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  }
+  .edit-row > * + * { margin-left: 10px; }
+  .edit-row .swatch { width: 20px; height: 44px; border-radius: 6px; flex: none; }
+  .edit-row .name { flex: 1; min-width: 0; font-weight: 700; }
+  .edit-row .name small { display: block; font-weight: 500; color: var(--muted); font-size: 15px; }
+  .icon-btn { width: 52px; height: 52px; border-radius: 12px; border: 1px solid var(--line); font-size: 22px; flex: none; }
+  .icon-btn:disabled { opacity: .25; }
+  label.f { display: block; font-weight: 700; margin: 18px 0 8px; }
+  input[type=text], textarea {
+    width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--card); color: var(--fg);
+  }
+  textarea { min-height: 46vh; font: 18px/1.45 ui-monospace, Menlo, monospace; }
+  .colors { display: flex; flex-wrap: wrap; margin: 0 -10px -10px 0; }
+  .colors > * { margin: 0 10px 10px 0; }
+  .colors button { width: 56px; height: 56px; border-radius: 14px; border: 3px solid transparent; }
+  .colors button.sel { border-color: var(--fg); }
+  .help { color: var(--muted); font-size: 16px; line-height: 1.5; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
+  .help code { font-family: ui-monospace, Menlo, monospace; color: var(--fg); }
+  .actions { display: flex; flex-wrap: wrap; margin: 18px 0 8px; }
+  .actions > * { margin: 0 10px 10px 0; }
+  .actions .grow { flex: 1; }
+  .danger { color: #d93025 !important; }
+  [data-theme="red"] .danger { color: var(--fg) !important; }
+  .about { color: var(--muted); font-size: 15px; margin-top: 18px; }
+  #err { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 80; background: #fff; color: #111; border: 2px solid #c62828; border-radius: 16px; padding: 14px; font-size: 17px; box-shadow: 0 6px 24px rgba(0,0,0,.3); }
+  #err code { display: block; font-size: 13px; margin: 6px 0 10px; color: #444; -webkit-user-select: text; user-select: text; word-break: break-word; }
+  #err button { min-height: 52px; padding: 0 22px; border-radius: 12px; font-weight: 800; background: #1e5bd8; color: #fff; margin-right: 10px; }
+</style>
+</head>
+<body>
+<div id="app"><div class="wrap" style="padding-top:40px;font-size:22px">Loading checklists…</div></div>
+<script>
+  // Any unexpected error: keep the app, close any keypad, and offer one-tap recovery buttons.
+  window.onerror = function (msg, src, line) {
+    try {
+      var p = document.getElementById('pad'); if (p) p.parentNode.removeChild(p);
+      document.body.style.overflow = '';
+      try { pad = null; } catch (e) {}
+      try { localStorage.setItem('da40.lastError', JSON.stringify({ msg: String(msg), src: String(src || '').split('/').pop(), line: line, t: Date.now() })); } catch (e) {}
+      var box = document.getElementById('err');
+      if (!box) { box = document.createElement('div'); box.id = 'err'; document.body.appendChild(box); }
+      box.innerHTML = '<b>Something went wrong.</b> Your checklists and flight data are saved.' +
+        '<code>' + String(msg).replace(/</g, '&lt;') + ' (' + String(src || '').split('/').pop() + ':' + line + ')</code>' +
+        '<button onclick="location.hash=\'#/\';location.reload()">Home</button><button onclick="location.reload()">Reload</button>';
+    } catch (e) {}
+  };
+  window.addEventListener('unhandledrejection', function () { /* background fetches may fail offline; ignore */ });
+</script>
+<input type="file" id="importFile" accept=".json,application/json" hidden>
+
+<script src="aircraft.js"></script>
+<script src="defaults.js"></script>
+<script src="perf.js"></script>
+<script src="charts.js"></script>
+<script>
+'use strict';
+
+const COLORS = ['#1e5bd8', '#138a4a', '#d9730d', '#6b3fc7', '#0f7f8a', '#c62828', '#4a4f57', '#a37800'];
+const COLOR_NAMES = { '#1e5bd8': 'Blue', '#138a4a': 'Green', '#d9730d': 'Orange', '#6b3fc7': 'Purple', '#0f7f8a': 'Teal', '#c62828': 'Red', '#4a4f57': 'Gray', '#a37800': 'Gold' };
+const APP_VERSION = 1;
+
+/* ---------- Storage ---------- */
+const KEY = 'checklists.v1', THEME_KEY = 'theme.v1';
+const uid = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+// Every localStorage key is prefixed: the Seneca app shares this origin (douglasbrody.github.io) and its storage.
+const NS = 'da40.';
+function read(k, fallback) { try { const v = JSON.parse(localStorage.getItem(NS + k)); return v === null || v === undefined ? fallback : v; } catch (e) { return fallback; } }
+function write(k, v) { try { localStorage.setItem(NS + k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+const fnv = s => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); } return (h >>> 0).toString(16); };
+const sig = ls => fnv(ls.map(l => [l.title, l.group || '', l.color, l.text].join('\u0001')).join('\u0002'));
+const slug = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+// Titles compared loosely: dashes, apostrophes, case and spacing don't matter.
+const normTitle = t => String(t || '').toLowerCase().replace(/[‐-―−-]+/g, '-').replace(/[‘’ʼ`']/g, "'").replace(/\s+/g, ' ').trim();
+
+// Default checklists get ids from their titles, so an open checklist or saved link survives updates.
+function freshDefaults() {
+  const seen = {};
+  return DEFAULTS.map(s => {
+    let id = 'd-' + slug(s.title);
+    seen[id] = (seen[id] || 0) + 1;
+    if (seen[id] > 1) id += '-' + seen[id];
+    return { id, ...s };
+  });
+}
+
+// Checklist content updates: a device whose checklists match a published default set (i.e. were
+// never edited) picks up new defaults automatically. Edited checklists are never overwritten.
+const VER_KEY = 'defaults.version', DSIG_KEY = 'defaults.sig', IDMAP_KEY = 'idmap.v1';
+const KNOWN_SIGS = [];   // add the previous DEFAULTS_VERSION's signature here at every bump
+const isPristine = ls => { const s = sig(ls); return s === read(DSIG_KEY, '') || KNOWN_SIGS.includes(s); };
+let lists = read(KEY, null);
+function applyDefaults() {
+  const old = Array.isArray(lists) ? lists : [];
+  lists = freshDefaults();
+  const map = read(IDMAP_KEY, {}) || {};
+  old.forEach(o => { const n = lists.find(x => normTitle(x.title) === normTitle(o.title)); if (n && n.id !== o.id) map[o.id] = n.id; });
+  write(IDMAP_KEY, map);
+  write(KEY, lists); write(VER_KEY, DEFAULTS_VERSION); write(DSIG_KEY, sig(lists));
+}
+if (!Array.isArray(lists) || (read(VER_KEY, 1) !== DEFAULTS_VERSION && isPristine(lists))) applyDefaults();
+// One-time migrations for edited checklists go here (pattern: moveStartTimes() / takeoffLineup() in the Seneca app).
+const updateWaiting = () => read(VER_KEY, 1) !== DEFAULTS_VERSION;
+let theme = read(THEME_KEY, 'day');
+function saveLists() { if (!write(KEY, lists)) alert('Could not save. Storage may be full or disabled.'); }
+
+/* ---------- Helpers ---------- */
+const $app = document.getElementById('app');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Checklist text: wrapping is allowed after slashes in long words (Mixture/Prop/Throttle) but never inside
+// short abbreviations (T/O), at a hyphen (X-FEED) or inside a number range (80–85, 0°–10°).
+const brk = s => esc(seps(s)).replace(/(^|[^\w])(\w{1,2})\/(\w{1,2})(?=$|[^\w])/g, '$1$2\u0000$3').replace(/\//g, '/<wbr>').replace(/\u0000/g, '/')
+  .replace(/(\w)-(\w)/g, '$1\u2011$2').replace(/(\d°?)–(\d)/g, '$1\u2060–\u2060$2')
+  .replace(/(\d|\}) (FT|FPM|KIAS|KTAS|KT|KTS|NM|GPH|RPM|AGL|MSL|QTS|PSI|SEC|AMPS|VOLTS)\b/g, '$1\u00a0$2')
+  .replace(/\b(Vx|Vy|Vr|Va|Vo|Vso|Vs1|Vs|Vfe|Vno|Vne|Vglide) (\d)/g, '$1\u00a0$2')
+  .replace(/^([A-Z0-9]) — (\S+)/, '$1\u00a0—\u00a0$2');   // 'P — Props': the letter stays with its word
+const nob = s => esc(seps(s)).replace(/(\w)-(\w)/g, '$1\u2011$2').replace(/(\d°?)–(\d)/g, '$1\u2060–\u2060$2')
+  .replace(/(\d|\}) (FT|FPM|KIAS|KTAS|KT|KTS|NM|GPH|RPM|AGL|MSL|QTS|PSI|SEC|AMPS|VOLTS|in)\b/g, '$1\u00a0$2')
+  .replace(/\b(Vx|Vy|Vr|Va|Vo|Vso|Vs1|Vs|Vfe|Vno|Vne|Vglide) (\d)/g, '$1\u00a0$2');
+function find(id) {
+  return lists.find(l => l.id === id) || lists.find(l => l.id === (read(IDMAP_KEY, {}) || {})[id]);
+}
+const findByTitle = t => lists.find(x => normTitle(x.title) === normTitle(t));
+const ICON_HOME = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>';
+const homeTile = (label) => `<button class="home-tile" data-go="#/" aria-label="${label ? esc(label) : 'Home'}">${ICON_HOME}<span>${label || 'HOME'}</span></button>`;
+
+// Text format: "# Section", "! Caution", "Challenge ... Response", "* highlighted", "^ pulsing highlight",
+// "| a | b | c" table rows (the first row is the header), plain text, "-> Label | subtitle : Checklist title"
+// for a big button, and directives: "@HIDDEN" (no tile, not in Next/Previous), "@BRANCH" (tile, but not in
+// Next/Previous), "@ATIS DEP" / "@ATIS ARR" (which ATIS the bottom line shows).
+function parse(text) {
+  const out = [];
+  for (const raw of String(text || '').split('\n')) {
+    const line = raw.trim();
+    if (!line || line.startsWith('@')) continue;
+    if (line.startsWith('->')) {
+      const m = line.slice(2).split(':'), lab = m[0].split('|');
+      out.push({ type: 'choice', label: lab[0].trim(), sub: (lab[1] || '').trim(), target: m.slice(1).join(':').trim() });
+    } else if (line.startsWith('|')) {
+      const cells = line.split('|').slice(1).map(x => x.trim());
+      if (cells.length && cells[cells.length - 1] === '') cells.pop();
+      const prev = out[out.length - 1];
+      if (prev && prev.type === 'table') prev.rows.push(cells); else out.push({ type: 'table', rows: [cells] });
+    }
+    else if (line.startsWith('#')) out.push({ type: 'section', text: line.replace(/^#+\s*/, '') });
+    else if (line.startsWith('!')) out.push({ type: 'note', text: line.replace(/^!+\s*/, '') });
+    else {
+      const mark = /^[*^]/.test(line) ? line[0] : '', body = mark ? line.replace(/^[*^]+\s*/, '') : line;
+      const m = body.split(/\s*(?:\.{3,}|…+)\s*/);
+      const hl = mark === '*' ? 'hl' : mark === '^' ? 'pulse' : '';
+      if (m.length > 1) out.push({ type: 'item', c: m[0], r: m.slice(1).join(' '), hl });
+      else out.push({ type: 'text', text: body, hl });
+    }
+  }
+  return out;
+}
+const metaCache = new Map();
+function meta(l) {
+  let m = metaCache.get(l.text);
+  if (!m) {
+    m = { hidden: false, branch: false, atis: '', subs: [], emerg: '' };
+    String(l.text || '').split('\n').forEach(raw => {
+      const t = raw.trim().toUpperCase();
+      if (t.startsWith('@SUBTITLE')) { const v = raw.trim().slice(9).trim(); if (v) m.subs.push(v); }
+      else if (t.startsWith('@EMERGENCY')) m.emerg = raw.trim().slice(10).trim();
+      else if (t === '@HIDDEN') m.hidden = true;
+      else if (t === '@BRANCH') m.branch = true;
+      else if (t.startsWith('@ATIS')) m.atis = /ARR/.test(t) ? 'arr' : 'dep';
+    });
+    metaCache.set(l.text, m);
+  }
+  return m;
+}
+
+function applyTheme() {
+  document.documentElement.dataset.theme = theme;
+  document.querySelector('meta[name=theme-color]').content = theme === 'day' ? '#1b1d21' : '#000000';
+}
+const THEME_LABEL = { day: ['☀︎', 'Day'], night: ['☾', 'Night'], red: ['●', 'Red'] };
+
+/* ---------- Screen wake lock (keeps the screen on while the app is in use) ---------- */
+let wakeLock = null, wakeReq = null, wantWake = false, wakeFailed = false;
+const wakeHint = () => ((navigator.maxTouchPoints || 0) > 0 || 'ontouchstart' in window) && (!('wakeLock' in navigator) || wakeFailed) && !read('wakehint.v1', false);
+function setWake(on) {
+  wantWake = on;
+  if (!('wakeLock' in navigator)) return;
+  if (on && !wakeLock && !wakeReq) {
+    wakeReq = navigator.wakeLock.request('screen').then(s => {
+      wakeReq = null;
+      if (!wantWake) { s.release(); return; }
+      wakeLock = s;
+      s.addEventListener('release', () => { if (wakeLock === s) wakeLock = null; });
+    }).catch(() => {
+      wakeReq = null;
+      if (!wakeFailed) { wakeFailed = true; const h = location.hash; if ((h === '' || h === '#' || h === '#/') && !pad) renderHome(); }
+    });
+  } else if (!on && wakeLock) { const s = wakeLock; wakeLock = null; s.release().catch(() => {}); }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && wantWake) setWake(true); });
+
+/* ---------- Flight data: wind & runway, takeoff data, times ---------- */
+// For the crosswind / headwind at takeoff and landing the pilot enters, for each side, the runway and the
+// wind (direction, speed, gust). Takeoff data is entered for the crew briefing. Values are kept on this
+// device; checklist text shows them with tokens like {dep.hw}, and tapping the line opens the keypad.
+const FD_KEY = 'flightdata.v1', STALE_MS = 12 * 3600e3;
+let fd = read(FD_KEY, {});
+if (!fd || typeof fd !== 'object' || Array.isArray(fd)) fd = {};
+// The weight & balance entries (seats, baggage, fuel, flight time, power) stay until the pilot clears them;
+// everything else is this flight's data.
+const WB_KEEP = new RegExp('^(' + AIRCRAFT.stations.map(s => s.k.replace('.', '\\.')).join('|') + '|plan\\.fuel|plan\\.time|plan\\.power)$');
+const wbOnly = o => { const w = {}; Object.keys(o).forEach(k => { if (WB_KEEP.test(k)) w[k] = o[k]; }); return w; };
+if (fd._t && Date.now() - fd._t > STALE_MS) fd = wbOnly(fd);   // last flight's data is more than 12 h old: start fresh (W&B kept)
+if (!fd._t && Object.keys(fd).length) { fd._t = Date.now(); write(FD_KEY, fd); }
+const saveFd = () => write(FD_KEY, fd);
+const SIDE_NAME = { dep: 'Departure', arr: 'Arrival' };
+const windFields = side => [
+  { k: side + '.wdir', label: 'Wind direction', max: 3, unit: '°', extra: 'VRB' },
+  { k: side + '.wspd', label: 'Wind speed', max: 2, unit: 'KT' },
+  { k: side + '.gust', label: 'Gusts', max: 2, unit: 'KT', extra: 'NONE' },
+  { k: side + '.rwy', label: side === 'dep' ? 'Departure runway' : 'Landing runway', kind: 'rwy' }];
+const TOB_FIELDS = [
+  { k: 'tob.len', label: 'Runway available', max: 5, unit: 'FT' },
+  { k: 'tob.todist', label: 'Takeoff distance over 50 ft', max: 4, unit: 'FT' }];
+// Hobbs / tach times (the meters in AIRCRAFT.meters): recorded at Inside Cockpit (out) and at shutdown (in, shown with the start times).
+const timeFields = when => AIRCRAFT.meters.map(m => ({ k: when + '.' + m.f, label: m.label, kind: 'decimal', max: 8 }));
+const FIELD = {};
+windFields('dep').concat(windFields('arr'), TOB_FIELDS, timeFields('out'), timeFields('in')).forEach(f => FIELD[f.k] = f);
+
+// Store a value and apply the knock-on rules (new wind = no old gust...).
+function setField(k, v) {
+  if (k.indexOf('cfg.') === 0) { planCfg[k.slice(4)] = +v; planCfg.src = ''; write(PLAN_CFG_KEY, planCfg); return; }
+  const [side, f] = k.split('.'), now = Date.now(), old = fd[k];
+  if ((f === 'wspd' || f === 'wdir') && v !== old) delete fd[side + '.gust'];
+  // a new start time at or past the recorded shutdown time means those shutdown times were from the last flight
+  if (side === 'out' && fd['in.' + f] !== undefined && +v >= +fd['in.' + f]) Object.keys(fd).forEach(x => { if (x.startsWith('in.')) delete fd[x]; });
+  fd[k] = v;
+  if (k === 'tob.len') fd['tob.lenFor'] = fd['dep.rwy'] || '';   // the runway it was entered for
+  if (k === 'dep.rwy' && fd['tob.len'] && !fd['tob.lenFor']) fd['tob.lenFor'] = v;   // a length typed before the runway
+  if (side === 'tob' && fd['tob.auto'] && fd['tob.auto'][k] !== undefined) { delete fd['tob.auto'][k]; if (fd['tob.note']) delete fd['tob.note'][k]; }
+  if ((side === 'dep' || side === 'arr') && f !== 'rwy') fd[side + '._t'] = now;   // the wind's age
+  fd._t = now;
+  saveFd();
+}
+function timesText(when) {
+  const parts = AIRCRAFT.meters.map(m => [m.tag, m.f]).map(([tag, f]) => {
+    const v = fd[when + '.' + f]; if (v === undefined || v === '') return '';
+    const start = fd['out.' + f];
+    let txt = tag + ' ' + (when === 'in' && start !== undefined && start !== '' ? start + '\u2192' + v : v);   // shutdown: start → end
+    if (when === 'in' && start !== undefined && !isNaN(+start) && !isNaN(+v) && +v >= +start) {   // how long that meter ran
+      const dec = Math.max((String(v).split('.')[1] || '').length, (String(start).split('.')[1] || '').length, 1);
+      txt += ' (+' + (+v - +start).toFixed(dec) + ')';
+    }
+    return txt;
+  }).filter(Boolean);
+  return parts.join(SEP);
+}
+
+const thousands = v => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const SEP = '\u00a0· ';   // a list separator that never starts a line
+const seps = t => String(t).replace(/ · /g, SEP);
+// A value: this flight's data, or (cfg.*) the aircraft settings that persist across flights.
+const getV = k => k === 'cfg.elev' && (typeof planCfg === 'undefined' || !planCfg || planCfg.elev === undefined) ? String(AIRCRAFT.home.elevFt) : k === 'cfg.magvar' ? String(magVar()) : k.indexOf('cfg.') === 0 ? (planCfg[k.slice(4)] !== undefined ? String(planCfg[k.slice(4)]) : undefined) : fd[k];
+function delV(k) { if (k.indexOf('cfg.') === 0) { delete planCfg[k.slice(4)]; write(PLAN_CFG_KEY, planCfg); } else { delete fd[k]; saveFd(); } }
+function fmt(k) {
+  const v = getV(k);
+  if (v === undefined || v === '') return '';
+  const f = k.split('.')[1];
+  if (f === 'wdir') return v === 'VRB' ? 'VRB' : v.padStart(3, '0') + '°' + (isTrue(k.split('.')[0]) ? 'T' : '');   // T = true (METAR)
+  if (f === 'ew') return thousands((+v).toFixed(1));
+  if (/^(alt|aalt)$/.test(f)) return isFinite(+v) ? (+v).toFixed(2) : String(v);
+  if (/^(len|todist|pa|apa|elev|aelev|ldglen|em)$/.test(f)) return String(v).replace(/^(-?)(\d+)/, (m, sg, d) => (sg ? '−' : '') + thousands(d));
+  if (/^(oat|aoat)$/.test(f)) return String(v).replace('-', '−');
+  if (f === 'magvar') return varText(+v);
+  return v;
+}
+function windText(side) {
+  const d = fd[side + '.wdir'], sp = fd[side + '.wspd'], g = fd[side + '.gust'];
+  if (!d && !sp) return '';
+  if (+sp === 0 && sp !== undefined) return 'CALM';
+  return (d ? fmt(side + '.wdir') : '—') + '@' + (sp || '—') + (g ? 'G' + g : '');
+}
+const sideRwy = side => fd[side + '.rwy'] || '';
+
+// Headwind / crosswind for a runway. Runway numbers are magnetic (heading ÷ 10), and so are ATIS and tower winds;
+// a written METAR / TAF wind is TRUE, so with side.wref = 'T' it is turned to magnetic with the magnetic variation
+// (magnetic = true + west variation; home base default in AIRCRAFT.home).
+const XW_LIMIT = AIRCRAFT.xwDemoKt;   // AFM maximum demonstrated crosswind, kt (null: no caution until it is entered)
+const MAGVAR_DEFAULT = AIRCRAFT.home.magVarW;   // ° west
+const okVar = v => typeof v === 'number' || (typeof v === 'string' && v.trim() !== '') ? (isFinite(+v) && Math.abs(+v) <= 30 ? +v : null) : null;
+const magVar = () => { const v = typeof planCfg !== 'undefined' && planCfg ? okVar(planCfg.magvar) : null; return v === null ? MAGVAR_DEFAULT : v; };
+const pad3 = n => String(n).padStart(3, '0');
+const varText = v => Math.abs(v) + '°\u00a0' + (v >= 0 ? 'W' : 'E');
+const isTrue = side => fd[side + '.wref'] === 'T';
+const magDir = side => { const d = fd[side + '.wdir']; if (!d || d === 'VRB') return d; const m = isTrue(side) ? ((+d + magVar()) % 360 + 360) % 360 : +d; return m === 0 ? 360 : m; };
+function windComp(side, rwy) {
+  const r = parseInt(rwy || sideRwy(side), 10), d = fd[side + '.wdir'], spRaw = fd[side + '.wspd'];
+  if (spRaw !== undefined && +spRaw === 0) return { calm: true };
+  if (!r || !d || spRaw === undefined) return null;
+  const sp = +spRaw, g = +fd[side + '.gust'] || 0;
+  if (d === 'VRB') return { vrb: true, sp, g };
+  const a = (magDir(side) - r * 10) * Math.PI / 180, s = Math.sin(a), c = Math.cos(a);
+  const hw = v => Math.round(v * c) || 0, xw = v => Math.round(Math.abs(v * s));
+  return { xw: xw(sp), xwG: g ? xw(g) : null, xside: s > 0.01 ? 'R' : s < -0.01 ? 'L' : '', h: hw(sp), hG: g ? hw(g) : null, hx: sp * c };
+}
+const WJ = '\u2060';   // word joiner: keeps "10–15" together when the line wraps
+const rng = (a, b) => (b === null || b === undefined || b === a ? String(a) : a + WJ + '–' + WJ + b);
+function headText(c) {
+  if (c.calm) return 'CALM';
+  if (c.vrb) return 'VRB\u00a0' + c.sp + (c.g ? 'G' + c.g : '');
+  const tw = c.h < 0 || (c.hG !== null && c.hG < 0);
+  if (!tw) return 'HW\u00a0' + rng(c.h, c.hG);
+  return 'TW\u00a0' + rng(Math.max(-c.h, 0), c.hG === null ? null : Math.max(-c.hG, 0));
+}
+const isTail = c => !!c && !c.calm && !c.vrb && (c.h < 0 || (c.hG !== null && c.hG < 0));
+const xwHigh = c => typeof XW_LIMIT === 'number' && !!c && !c.calm && !c.vrb && Math.max(c.xw, c.xwG || 0) > XW_LIMIT;
+const xwText = c => 'XW\u00a0' + rng(c.xw, c.xwG) + c.xside;
+function compText(c) { return !c ? '' : (c.calm || c.vrb) ? headText(c) : xwText(c) + SEP + headText(c); }
+function compHtml(c) {
+  if (!c) return '';
+  if (c.calm || c.vrb) return esc(headText(c));
+  return `<span class="${xwHigh(c) ? 'warn' : ''}">${esc(xwText(c))}</span>${SEP}<span class="${isTail(c) ? 'warn' : ''}">${esc(headText(c))}</span>`;
+}
+const windAgeMin = side => fd[side + '._t'] ? Math.floor((Date.now() - fd[side + '._t']) / 60000) : 0;
+const ageText = m => m >= 120 ? Math.floor(m / 60) + '\u00a0H\u00a0OLD' : m + '\u00a0MIN\u00a0OLD';
+// "RWY 24 · XW 7–12R · HW 10–16" (the raw wind is on the bottom line and the data screen)
+function windSummary(side) {
+  const c = windComp(side), age = windAgeMin(side);
+  return ['RWY\u00a0' + (sideRwy(side) || '—'), c ? compText(c) : windText(side) || 'WIND\u00a0—', age > 60 ? ageText(age) : ''].filter(Boolean).join(SEP);
+}
+// Runway available (for the takeoff distance margin).
+const lenOk = () => !!fd['tob.len'] && (!fd['tob.lenFor'] || !sideRwy('dep') || fd['tob.lenFor'] === sideRwy('dep'));
+function toraText() {
+  const rwy = sideRwy('dep'), len = fd['tob.len'];
+  if (len && !lenOk()) return 'RWY\u00a0' + rwy + SEP + thousands(len) + '\u00a0FT was for RWY\u00a0' + fd['tob.lenFor'] + ' — re\u2011enter';
+  return [rwy ? 'RWY\u00a0' + rwy : '', len ? thousands(len) + '\u00a0FT' : ''].filter(Boolean).join(SEP);
+}
+const toraFeet = () => lenOk() ? +fd['tob.len'] : 0;
+// Values for {tokens} in checklist text, whether to show them as a caution, and which fields a tap edits.
+const SIDES = ['dep', 'arr'];
+const hasWind = sd => ['rwy', 'wdir', 'wspd'].some(f => fd[sd + '.' + f] !== undefined);
+function tokenValue(key) {
+  if (key === 'tora') return toraText();
+  if (key === 'times.in' && !timesText('in') && timesText('out')) return 'START ' + timesText('out') + SEP + 'TAP TO RECORD';   // start times for reference
+  if (key === 'times.out' || key === 'times.in') return timesText(key.split('.')[1]) || 'TAP TO RECORD';
+  const [side, f] = key.split('.');
+  if (SIDES.includes(side)) {
+    if (f === 'hw') { const c = windComp(side); return c ? 'RWY\u00a0' + (sideRwy(side) || '—') + SEP + headText(c) + (c.calm || c.vrb ? '' : '\u00a0KT') + (c.xw || c.xwG ? SEP + xwText(c) + '\u00a0KT' : '') : ''; }
+    if (f === 'comp') { const c = windComp(side); return [windText(side), compText(c)].filter(Boolean).join(SEP); }
+    if (f === 'sum') return hasWind(side) ? windSummary(side) : 'TAP TO ENTER';
+  }
+  if (key === 'tob.todist') {   // briefing values carry their unit, or the reason there is no value
+    const v = fmt(key), n = fd['tob.note'] && fd['tob.note'][key];
+    return v ? v + '\u00a0FT' : n || '';
+  }
+  return FIELD[key] ? fmt(key) : '';
+}
+function tokenWarn(key) {
+  const [side, f] = key.split('.');
+  const nk = key;   // a briefing value replaced by the reason it is missing
+  if (nk === 'tob.todist' && !fd[nk] && fd['tob.note'] && fd['tob.note'][nk]) return true;
+  if (nk === 'tob.todist' && planNow && planNow.rep && (planNow.rep.kept.length || planNow.rep.why)) {   // the pilot's own value
+    const x = planNow.rep.kept.filter(q => q.k === nk)[0]; if (x && keptUnsafe(x, planNow.rep)) return true;
+  }
+  if (key === 'tora' || key === 'tob.len') return !!fd['tob.len'] && !lenOk();
+  if (key === 'tob.todist') { const d = +fd['tob.todist'], av = toraFeet(); return !!(d && av && d > av); }
+  if (SIDES.includes(side) && (f === 'hw' || f === 'comp' || f === 'sum')) { const c = windComp(side); return isTail(c) || xwHigh(c) || (f === 'sum' && windAgeMin(side) > 60); }
+  return false;
+}
+function tokenFields(key) {
+  let ks = [];
+  if (key === 'tora') ks = ['tob.len', 'dep.rwy'];
+  else if (key === 'times.out' || key === 'times.in') ks = timeFields(key.split('.')[1]).map(f => f.k);
+  else {
+    const [side, f] = key.split('.');
+    if (SIDES.includes(side) && (f === 'sum' || f === 'comp' || f === 'hw')) ks = ATIS_KEYS[side].slice();
+    else ks = [key];
+  }
+  return ks.filter(k => FIELD[k]);
+}
+const TOKEN = /\{([a-z]+(?:\.[a-z]+)?)\}/g;
+const unitTokens = html => html.replace(/\{tob\.todist\}(?:[ \u00a0]|&nbsp;)*(?:FT|FEET)\b\.?/gi, '{tob.todist}');   // the value carries its unit
+const fillTokens = html => unitTokens(html).replace(TOKEN, (m, k) => {
+  const v = tokenValue(k);
+  if (!v && !tokenFields(k).length) return '';   // a token this version doesn't know (left in an edited checklist)
+  return `<span class="fv${v ? '' : ' empty'}${tokenWarn(k) ? ' warn' : ''}">${v ? esc(v) : '____'}</span>`;
+});
+const rowKeys = text => { const ks = []; text.replace(TOKEN, (m, k) => { tokenFields(k).forEach(x => ks.includes(x) || ks.push(x)); }); return ks; };
+
+/* ---------- Flight phase and the ATIS (wind) line ---------- */
+// Normal checklists: no ATIS line before Before Taxi, departure from Before Taxi through Takeoff, arrival
+// after Takeoff. The phase reached is remembered, so emergencies, maneuvers and the home screen follow it.
+function phaseSide(l) {
+  if (!l || !inFlow(l)) return null;
+  const idx = (id, name, loose) => {
+    let i = lists.findIndex(x => x.id === id && inFlow(x));
+    if (i < 0) i = lists.findIndex(x => inFlow(x) && normTitle(x.title) === name);
+    if (i < 0 && loose) i = lists.findIndex(x => inFlow(x) && !meta(x).hidden && loose.test(normTitle(x.title)));
+    return i;
+  };
+  const t = idx('d-takeoff', 'takeoff', /^takeoff(?!.*brief)/); if (t < 0) return null;
+  let bt = idx('d-before-taxi', 'before taxi', /before taxi/); if (bt < 0) bt = idx('d-taxi', 'taxi', /^taxi\b/);
+  const i = lists.indexOf(l);
+  return i > t ? 'arr' : (bt >= 0 && i < bt ? 'none' : 'dep');
+}
+const curPhase = () => fd._phase === 'arr' ? 'arr' : 'dep';
+// prompt: when this side's wind is still blank, offer to enter it (normal flow); otherwise show nothing.
+function wxLine(side, prompt) {
+  if (!side || side === 'none') return '';
+  if (!hasWind(side)) {
+    if (!prompt) return '';
+    return `<button class="wx empty" data-act="padall" data-tab="${side}"><b>${side.toUpperCase()}</b> <span class="wx-rest">Tap to enter the ATIS</span></button>`;
+  }
+  const rwy = sideRwy(side), c = windComp(side, rwy), age = windAgeMin(side), wt = c && (c.calm || c.vrb) ? '' : windText(side);
+  const comp = c ? compHtml(c) : (rwy ? 'XW —' : 'XW — enter runway');
+  return `<button class="wx" data-go="#/data"><b>${side.toUpperCase()}</b> <span class="wx-key">${age > 60 ? `<span class="warn">${ageText(age)}</span>${SEP}` : ''}RWY\u00a0${esc(rwy || '—')}${SEP}<span class="wx-xw">${comp}</span></span>`
+    + (wt ? `<span class="wx-rest">· ${esc(wt)}</span>` : '') + `</button>`;
+}
+
+// Bottom row on every screen outside the home screen and the Emergency tree:
+// the wind line plus a red EMERGENCY tile. Where it goes depends on the phase of flight: a checklist's
+// "@EMERGENCY <name>" line names an emergency checklist or emergency group screen (e.g. "Emergency" for
+// the full list). Without one, or if the name doesn't match, it opens Engine Failure — Memory Items.
+function emergencyRoot() {
+  const g = groups('').find(x => !x.list && isEmergency(x.name));
+  return g ? g.path : '';
+}
+function emergencyTarget(name) {
+  const want = String(name || '').trim();
+  if (want) {
+    const n = normTitle(want);
+    const l = lists.find(x => isEmergency(x.group) && normTitle(x.title) === n);
+    if (l) return `#/list/${l.id}`;
+    const paths = new Set();
+    lists.forEach(x => { const g = cleanGroup(x.group); if (!isEmergency(g)) return;
+      g.split('/').forEach((_, i, a) => paths.add(a.slice(0, i + 1).join('/'))); });
+    const g = [...paths].find(p => normTitle(p) === n || normTitle(lastPart(p)) === n);
+    if (g) return groupHash(g);
+  }
+  const mi = lists.find(l => isEmergency(l.group) && /memory items/i.test(l.title || ''));
+  if (mi) return `#/list/${mi.id}`;
+  const root = emergencyRoot();
+  return root ? groupHash(root) : '';
+}
+function footer(wx, inEmergency, target) {
+  const go = emergencyTarget(target);
+  const btn = go && !inEmergency ? `<button class="emerg-tile" data-go="${go}">⚠ EMERGENCY</button>` : '';
+  if (!btn) return wx;
+  return `<div class="foot">${wx}${btn}</div>`;
+}
+
+/* ---------- Keypad sheet ---------- */
+// Re-rendering keeps the scroll position of the key area, and the action row is always visible.
+function sheetHtml(inner, cls) {
+  let el = document.getElementById('pad');
+  if (!el) { el = document.createElement('div'); el.id = 'pad'; document.body.appendChild(el); }
+  const old = el.querySelector('.pad-body'), top = old ? old.scrollTop : 0;
+  el.innerHTML = `<div class="sheet2 ${cls || ''}" role="dialog" aria-modal="true">${inner}</div>`;
+  document.body.style.overflow = 'hidden';   // the page behind doesn't scroll while the keypad is open
+  const sh = el.querySelector('.sheet2'); sh.setAttribute('tabindex', '-1');
+  if (!el.contains(document.activeElement)) { try { sh.focus({ preventScroll: true }); } catch (err) { sh.focus(); } }
+  const nb = el.querySelector('.pad-body'), mid = el.querySelector('.pad-mid');
+  if (nb && top) nb.scrollTop = top;
+  if (nb && mid) {   // "MORE KEYS" cue while part of the key area is below the fold
+    const upd = () => mid.classList.toggle('more', nb.scrollTop + nb.clientHeight < nb.scrollHeight - 4);
+    nb.addEventListener('scroll', upd, { passive: true }); upd();
+  }
+}
+const padMid = body => `<div class="pad-mid"><div class="pad-body">${body}</div><div class="pad-cue">MORE KEYS ↓</div></div>`;
+const keyBtn = (code, label, cls) => `<button class="key${cls ? ' ' + cls : ''}" data-pad="${esc(code)}"${code === 'back' ? ' aria-label="Delete"' : ''}>${label}</button>`;
+let pad = null;   // { keys, i, buf, after, autoT }
+let padTimer = 0;
+function padTimerClear() { clearTimeout(padTimer); padTimer = 0; }
+function scheduleAdvance() {
+  const p = pad, i = pad.i;
+  padTimerClear();
+  padTimer = setTimeout(() => { padTimer = 0; if (pad === p && pad.i === i) advancePad(false, true); }, 150);
+}
+function openPad(keys, start, after, src) {   // src: 'METAR' (planning) or 'ATIS' (airplane) for wind / temperature / altimeter
+  keys = (keys || []).filter(k => FIELD[k]);
+  if (!keys.length) return;
+  padTimerClear();
+  if (!document.getElementById('pad')) noteOpener();
+  pad = { keys, i: Math.min(start || 0, keys.length - 1), buf: '', after, autoT: 0, err: '', src: src || '', refSet: false };
+  renderPad();
+}
+function closePad() {
+  padTimerClear();
+  const after = pad && pad.after;
+  pad = null;
+  const el = document.getElementById('pad'); if (el) el.remove();
+  if (after) return after();
+  rerender(); refocusOpener();
+}
+// After a keypad opened from the keyboard closes, put focus back on the row or field that opened it.
+let opener = null, keyboardUsed = false;
+document.addEventListener('keydown', () => { keyboardUsed = true; }, true);
+document.addEventListener('pointerdown', () => { keyboardUsed = false; }, true);
+function noteOpener() {
+  const a = document.activeElement;
+  opener = a && a.closest && a.closest('[data-keys], .field[data-i]') ? (a.dataset.keys ? '[data-keys="' + a.dataset.keys + '"]' : '.field[data-i="' + a.dataset.i + '"][data-tab="' + a.dataset.tab + '"]') : null;
+}
+function refocusOpener() {
+  if (!opener || !keyboardUsed) return;
+  const el = $app.querySelector(opener); opener = null;
+  if (el) { try { el.focus({ preventScroll: true }); } catch (err) { el.focus(); } }
+}
+function shake() { const v = document.querySelector('.pad-val'); if (!v) return; v.classList.remove('shake'); void v.offsetWidth; v.classList.add('shake'); }
+function commitPad() {
+  if (!pad || pad.buf === '') return true;
+  const k = pad.keys[pad.i], f = FIELD[k]; if (!f) return true;
+  const [side, fld] = k.split('.');
+  let b = pad.buf;
+  if (f.kind === 'rwy' || fld === 'wspd' || fld === 'gust' || side === 'plan' || side === 'cfg') b = b.replace(/^(-?)0+(?=\d)/, '$1');   // '08' -> '8'
+  if (/^(alt|aalt)$/.test(fld) && /^\d{4}$/.test(b)) b = b.slice(0, 2) + '.' + b.slice(2);   // '3012' as the ATIS says it = 30.12
+  const n = parseFloat(b);
+  const range = STATION[k] ? [0, 600] : { fuel: [0, FUEL_MAX], time: [0, 12], oat: [-50, 55], aoat: [-50, 55], pa: [-1500, 25000], apa: [-1500, 25000], ldglen: [500, 20000], ew: [500, 10000], em: [10000, 5000000], magvar: [-30, 30],
+    alt: [27.5, 31.5], aalt: [27.5, 31.5], elev: [-1500, 15000], aelev: [-1500, 15000] }[fld];   // entry sanity ranges, not aircraft limits
+  if ((side === 'plan' || side === 'cfg') && range && !(n >= range[0] && n <= range[1] && /\d/.test(b) && !/\.$/.test(b))) {
+    pad.err = !/\d$/.test(b) ? 'Finish the number' : fld === 'magvar' ? 'Allowed 30° E to 30° W' : /^(alt|aalt)$/.test(fld) ? 'Allowed 27.50 to 31.50 IN' : 'Allowed ' + sgn(range[0]) + ' to ' + sgn(range[1]) + (f.unit ? ' ' + f.unit : '');
+    shake(); renderPad(); return false;
+  }
+  const bad = (fld === 'wdir' && b !== 'VRB' && !(n >= 0 && n <= 360))
+    || (f.kind === 'rwy' && !(parseInt(b, 10) >= 1 && parseInt(b, 10) <= 36))
+    || (fld === 'gust' && fd[side + '.wspd'] !== undefined && !(n > +fd[side + '.wspd']))
+    || (f.kind === 'decimal' && (!/\d/.test(b) || /\.$/.test(b)))
+    || (side === 'in' && fd['out.' + fld] !== undefined && n < +fd['out.' + fld]);   // shutdown reading below the start reading
+  if (bad) { shake(); return false; }
+  const tr = fld === 'wdir' ? padTrue(k, side) : null;
+  setField(k, b);
+  if (pad.src && (side === 'dep' || side === 'arr' || side === 'plan') && SRC_FIELDS.test(fld)) {
+    const sd = side === 'plan' ? (fld === 'aoat' || fld === 'aalt' ? 'arr' : 'dep') : side;
+    if (tr !== null) { if (tr) fd[sd + '.wref'] = 'T'; else delete fd[sd + '.wref']; }
+    fd[sd + '.src'] = pad.src; fd[sd + '.srcT'] = Date.now(); saveFd();
+  }
+  return true;
+}
+function advancePad(skipCommit, auto) {
+  if (!pad) return;
+  padTimerClear();
+  if (!skipCommit && !commitPad()) return;
+  pad.i++; pad.buf = ''; pad.err = ''; pad.autoT = auto ? Date.now() : 0;
+  if (pad.i >= pad.keys.length) closePad(); else renderPad();
+}
+const unitFor = (f, v) => (!f.unit || v === 'VRB' || /°/.test(v)) ? '' : f.unit;
+const padTrue = (k, side) => pad && pad.src && !pad.refSet && /\.wdir$/.test(k) && (pad.buf !== '' || fd[k] === undefined) ? pad.src === 'METAR' : isTrue(side);
+function renderPad() {
+  const k = pad.keys[pad.i], f = FIELD[k];
+  if (!f) { pad = null; const el = document.getElementById('pad'); if (el) el.remove(); return; }
+  const side = k.split('.')[0];
+  const pk = PLAN_KEYS.dep.indexOf(k) >= 0 ? 'dep' : PLAN_KEYS.arr.indexOf(k) >= 0 ? 'arr' : '';
+  const group = pad.src && pk ? SIDE_NAME[pk] + (pad.src === 'METAR' ? ' METAR · planning' : ' ATIS') : side === 'tob' ? 'Takeoff data' : side === 'out' ? 'Start times' : side === 'in' ? 'Shutdown times' : side === 'plan' ? 'Preflight planning' : side === 'cfg' ? 'Aircraft' : SIDE_NAME[side] + ' wind & runway';
+  const digits = '123456789'.split('').map(d => keyBtn(d, d)).join('');
+  let body;
+  if (f.kind === 'rwy') {
+    // pattern work: the landing runway is usually the departure runway
+    const same = side === 'arr' && fd['dep.rwy'] ? `<div class="keys">${keyBtn('E' + fd['dep.rwy'], 'SAME AS DEPARTURE · ' + esc(fd['dep.rwy']), 'big same')}</div>` : '';
+    body = same + `<div class="keys num">${digits}${keyBtn('XL', 'L')}${keyBtn('0', '0')}${keyBtn('XR', 'R')}${keyBtn('XC', 'C')}${keyBtn('back', '⌫', 'span2')}</div>`;
+  } else {
+    const extra = f.kind === 'decimal' ? '.' : f.extra || '';
+    const tr = padTrue(k, side), ref = /\.wdir$/.test(k) ? `<div class="keys two">${keyBtn('RM', 'ATIS / TOWER · MAG', tr ? 'ref' : 'ref on')}${keyBtn('RT', 'METAR · TRUE', tr ? 'ref on' : 'ref')}</div>` : '';
+    body = ref + `<div class="keys num">${digits}${extra ? keyBtn('X' + extra, esc(extra)) : '<span></span>'}${keyBtn('0', '0')}${keyBtn('back', '⌫')}</div>`;
+  }
+  const typing = pad.buf !== '';
+  const shownV = typing ? pad.buf : fmt(k);
+  const varNum = k === 'cfg.magvar' && typing && /\d/.test(pad.buf);   // the variation reads as '5° E' while it is typed
+  const wbBlank = WB_KEEP.test(k) && !typing && pnum(k) === null;   // a blank W&B entry counts as 0
+  const bad = !typing && /^(plan|cfg)\./.test(k) && !wbBlank && getV(k) !== undefined && !usable(k);   // stored garbage: shown as blank
+  const altTyping = typing && /\.(alt|aalt|calts)$/.test(k) && /^\d{4}$/.test(pad.buf);
+  const shown = varNum ? esc(varText(+pad.buf)) : wbBlank ? '<span class="was">0</span>' : altTyping ? esc(pad.buf.slice(0, 2) + '.' + pad.buf.slice(2)) : typing ? esc(shownV.replace('-', '−')) : (getV(k) !== undefined && !bad ? `<span class="was">${esc(shownV)}</span>` : '<span class="was">—</span>');
+  const unit = varNum ? '' : wbBlank ? f.unit || '' : unitFor(f, shownV);
+  const lastF = pad.i === pad.keys.length - 1;
+  sheetHtml(`<div class="pad-head">
+      <div class="pad-step"><span>${esc(group)} · ${pad.i + 1} of ${pad.keys.length}</span></div>
+      <div class="pad-label">${esc(f.label)}${/\.wdir$/.test(k) && padTrue(k, side) ? ' (true)' : ''}</div>
+      <div class="pad-val">${shown}${unit && (typing || getV(k) !== undefined || wbBlank) ? `<span class="unit">${esc(unit)}</span>` : ''}</div>${pad.err ? `<div class="pad-err" role="alert">${esc(pad.err)}</div>` : ''}${side === 'in' && fd['out.' + k.slice(3)] !== undefined && fd['out.' + k.slice(3)] !== '' ? `<div class="pad-note">Start: ${esc(fd['out.' + k.slice(3)])}</div>` : ''}${/\.wdir$/.test(k) && padTrue(k, side) ? (() => { const d = typing ? pad.buf : getV(k), n = parseInt(d, 10); const mv = magVar(); return `<div class="pad-note">METAR wind is true: ${n >= 0 && n <= 360 ? pad3(n) + '°T ' + (mv >= 0 ? '+ ' : '− ') + varText(mv) + ' = ' + pad3(((n + mv) % 360 + 360) % 360 || 360) + '° magnetic' : 'converted to magnetic with ' + varText(mv) + ' variation'}</div>`; })() : ''}
+    </div>
+    ${padMid(body)}
+    <div class="pad-act"><button data-pad="prev"${pad.i === 0 ? ' disabled' : ''}>← Back</button><button data-pad="done">Done</button><button class="go" data-pad="next">${lastF ? 'Save' : 'Next →'}</button></div>`, 'pad');
+}
+function padKey(a) {
+  if (!pad) return;
+  const f = FIELD[pad.keys[pad.i]];
+  if (a === 'next') return advancePad();
+  if (a === 'prev') { padTimerClear(); if (pad.i > 0 && commitPad()) { pad.i--; pad.buf = ''; pad.err = ''; renderPad(); } return; }
+  if (a === 'done') { padTimerClear(); if (commitPad()) closePad(); return; }
+  pad.err = '';
+  if (a === 'back') {
+    padTimerClear();
+    if (pad.buf) pad.buf = pad.buf.slice(0, -1);
+    else if (pad.keys[pad.i].indexOf('cfg.') === 0) { pad.err = 'This setting can be changed, not cleared'; renderPad(); return shake(); }
+    else if (fd['tob.auto'] && fd[pad.keys[pad.i]] !== undefined && fd[pad.keys[pad.i]] === fd['tob.auto'][pad.keys[pad.i]]) { pad.err = 'From Preflight Planning — type your own value to override'; renderPad(); return shake(); }
+    else delV(pad.keys[pad.i]);
+    return renderPad();
+  }
+  if (padTimer) { padTimerClear(); advancePad(false, true); if (!pad) return; return padKey(a); }   // finish the automatic advance first
+  const kind = a[0], val = a.slice(1);
+  if (/^\d$/.test(a)) {
+    if (f.kind === 'rwy' && /[LCR]$/.test(pad.buf)) return;
+    if (pad.buf === 'VRB') pad.buf = '';
+    const len = pad.buf.replace('-', '').length;
+    if (len >= (f.max || 2)) return;
+    pad.buf += a; renderPad();
+    if (f.kind !== 'rwy' && f.kind !== 'decimal' && f.extra !== '−' && len + 1 >= (f.max || 2)) scheduleAdvance();   // a minus may still follow
+    return;
+  }
+  if (kind === 'E') { pad.buf = val; return advancePad(false, true); }   // SAME AS DEPARTURE
+  if (kind === 'R') { const sd = pad.keys[pad.i].split('.')[0]; if (val === 'T') fd[sd + '.wref'] = 'T'; else delete fd[sd + '.wref']; pad.refSet = true; fd._t = Date.now(); saveFd(); return renderPad(); }   // wind reference
+  if (kind === 'X') {
+    if (val === '.') { if (!pad.buf.includes('.') && pad.buf.length < (f.max || 8) - 1) pad.buf = (pad.buf || '0') + '.'; return renderPad(); }
+    if (val === '−') { pad.buf = pad.buf.charAt(0) === '-' ? pad.buf.slice(1) : '-' + pad.buf; return renderPad(); }
+    if (val === 'NONE') { delete fd[pad.keys[pad.i]]; saveFd(); pad.buf = ''; return advancePad(true, true); }
+    if (f.kind === 'rwy') { if (!pad.buf || /[LCR]$/.test(pad.buf)) return; pad.buf += val; return advancePad(false, true); }
+    pad.buf = val; return advancePad(false, true);                            // VRB
+  }
+}
+document.addEventListener('click', e => {
+  if (!pad) return;
+  if (e.target.id === 'pad') { padTimerClear(); if (commitPad()) closePad(); return; }   // tap outside the keypad
+  const b = e.target.closest('[data-pad]'); if (!b || b.disabled) return;
+  padKey(b.dataset.pad);
+});
+// Hardware keyboard (desktop, iPad keyboard): digits, L/C/R, V = VRB, N = no gust, Enter = Next, Esc = Done.
+let kbTab = false;
+document.addEventListener('keydown', e => {
+  if (!pad) return;
+  if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  const k = e.key, up = k.length === 1 ? k.toUpperCase() : '';
+  if (k === 'Tab') {   // keep keyboard focus inside the keypad, cycling through its buttons
+    e.preventDefault(); kbTab = true;
+    const bs = [...document.querySelectorAll('#pad button:not([disabled])')]; if (!bs.length) return;
+    let i = bs.indexOf(document.activeElement);
+    i = e.shiftKey ? (i <= 0 ? bs.length - 1 : i - 1) : (i + 1) % bs.length;
+    bs[i].focus(); return;
+  }
+  // a keypad button reached with Tab is pressed with Enter / Space, as long as nothing has been typed since
+  const ae = document.activeElement, onBtn = ae && ae.tagName === 'BUTTON' && ae.closest('#pad');
+  if ((k === 'Enter' || k === ' ') && onBtn && kbTab && !pad.buf) return;
+  kbTab = false;
+  if (onBtn) { const sh = document.querySelector('#pad .sheet2'); if (sh) sh.focus(); }
+  const f = FIELD[pad.keys[pad.i]] || {};
+  if (k === 'Enter') {
+    e.preventDefault();
+    if (!pad.buf && pad.autoT) { pad.autoT = 0; return; }   // that value already moved on by itself
+    return padKey('next');
+  }
+  if (k === 'Escape') { e.preventDefault(); return padKey('done'); }
+  if (k === 'Backspace') { e.preventDefault(); return padKey('back'); }
+  if (!up) return;
+  pad.autoT = 0;
+  let code = '';
+  if (/\d/.test(up)) code = up;
+  else if (f.kind === 'rwy' && /[LCR]/.test(up)) code = 'X' + up;
+  else if (/wdir$/.test(f.k || '') && up === 'V') code = 'XVRB';
+  else if (/wdir$/.test(f.k || '') && (up === 'T' || up === 'M')) code = 'R' + up;
+  else if (/gust$/.test(f.k || '') && up === 'N') code = 'XNONE';
+  else if (k === '.' && f.kind === 'decimal') code = 'X.';
+  else if (k === '-' && f.extra === '−') code = 'X−';
+  if (code) { e.preventDefault(); padKey(code); }
+});
+
+/* ---------- ATIS & Takeoff screen ---------- */
+let dataReturn = '#/';
+function returnLabel() {
+  const p = dataReturn.replace(/^#\/?/, '').split('/');
+  if (p[0] === 'list') { const l = find(p[1]); return l ? l.title : 'Previous'; }
+  if (p[0] === 'g') { try { return lastPart(decodeURIComponent(p.slice(1).join('/'))); } catch (e) { return 'Previous'; } }
+  return 'Home';
+}
+// Card values: the biggest size (30 px down to 18 px) at which each value fits its card.
+function fitFields() {
+  $app.querySelectorAll('.field .val').forEach(v => {
+    for (let px = 30; px >= 18; px -= 2) {
+      v.style.fontSize = px + 'px';
+      if (v.scrollWidth <= v.clientWidth + 1 && v.offsetHeight <= px * 1.3 * 2 + 2) break;
+    }
+  });
+}
+function fieldCards(tab, fields) {
+  return `<div class="fields">${fields.map((f, i) => {
+    const v = fmt(f.k), u = unitFor(f, v), why = !v && fd['tob.note'] && fd['tob.note'][f.k];
+    return `<button class="field" data-act="padfrom" data-tab="${tab}" data-i="${i}"><small>${esc(f.label)}</small><span class="${v ? 'val' + (tab === 'tob' && tokenWarn(f.k) ? ' warn' : '') : 'blank'}">${v ? esc(v) + (u ? '\u00a0<small>' + esc(u) + '</small>' : '') : why ? `<span class="warn why">${esc(why)}</span>` : 'tap to enter'}</span></button>`;
+  }).join('')}</div>`;
+}
+// ATIS cards. A blank arrival temperature / altimeter is the departure value, and is shown as that.
+function atisCards(sd, keys, act) {
+  const same = { 'plan.aoat': 'plan.oat', 'plan.aalt': 'plan.alt' };
+  keys = keys || ATIS_KEYS[sd];
+  return `<div class="fields">${keys.map((k, i) => {
+    if (k === 'cfg.elev' || k === 'plan.aelev') return planCards([FIELD[k]], k === 'plan.aelev' ? { 'plan.aelev': 'departure: ' + thousands(depElev()) + ' FT' } : null).replace(/^<div class="fields">|<\/div>$/g, '');
+    const f = FIELD[k], v = fmt(k), u = unitFor(f, v), d = same[k] && fmt(same[k]);
+    const warn = k === 'tob.len' && tokenWarn(k);
+    return `<button class="field" ${act === 'plan' ? `data-act="planfrom" data-k="${k}"` : `data-act="padfrom" data-tab="${sd}" data-i="${i}"`}><small>${esc(f.label)}${/\.wdir$/.test(k) && isTrue(sd) && v ? ' (true)' : ''}</small><span class="${v ? 'val' + (warn ? ' warn' : '') : 'blank'}">${v ? esc(v) + (u ? '\u00a0<small>' + esc(u) + '</small>' : '') : d ? 'departure: ' + esc(d) + (f.unit ? '\u00a0' + esc(f.unit) : '') : 'tap to enter'}</span></button>`;
+  }).join('')}</div>`;
+}
+function renderData() {
+  const wind = sd => {
+    const c = windComp(sd), age = windAgeMin(sd);
+    const any = ATIS_KEYS[sd].some(k => fd[k] !== undefined);
+    return `<section class="dsec">
+      <div class="dsec-head"><h2>${SIDE_NAME[sd]} ATIS</h2>
+        ${sd === 'arr' && ATIS_KEYS.dep.some(k => fd[k] !== undefined) ? '<button class="small-btn" data-act="copydep">Same as departure</button>' : ''}
+        <button class="small-btn go" data-act="padall" data-tab="${sd}">${any ? 'Re-enter' : 'Enter'}</button></div>
+      <div class="calc"><small>${sideRwy(sd) ? 'Runway\u00a0' + esc(sideRwy(sd)) : 'Runway —'}${windText(sd) ? SEP + esc(windText(sd)) : ''}${age > 60 ? `${SEP}<span class="warn">${ageText(age)}</span>` : ''}</small>${c ? compHtml(c) : (hasWind(sd) ? (sideRwy(sd) ? 'enter the wind' : 'enter the runway') : '—')}</div>
+      <p class="pmeta">${srcOf(sd) === 'METAR' ? srcHtml(sd) + '. Enter the ATIS to replace it.' : srcOf(sd) === 'ATIS' ? srcHtml(sd) + (sd === 'dep' ? ' — used by Preflight Planning.' : '.') : sd === 'dep' ? 'Enter the ATIS here, or the METAR on Preflight Planning.' : 'Blank temperature / altimeter = departure.'}</p>
+      ${atisCards(sd)}
+      <p class="pmeta">${isTrue(sd) ? `Wind from a <b>METAR (true)</b>: turned to magnetic with ${varText(magVar())} variation${fd[sd + '.wdir'] && fd[sd + '.wdir'] !== 'VRB' ? ' (' + esc(pad3(fd[sd + '.wdir'])) + '°T = ' + pad3(magDir(sd)) + '° magnetic)' : ''} <button class="link" data-act="magvar">change variation</button> <button class="link" data-act="wref" data-tab="${sd}">use ATIS / tower (magnetic)</button>` : `Wind from ATIS / tower (magnetic, like the runway numbers). <button class="link" data-act="wref" data-tab="${sd}">Wind from a METAR (true)?</button>`}</p>
+    </section>`;
+  };
+  $app.innerHTML = `<div class="wrap data">
+    <div class="home-head with-back">
+      ${homeTile()}
+      <button class="next-tile" data-go="${esc(dataReturn)}"><small>← Back to</small><span>${esc(returnLabel())}</span></button>
+      <h1 class="group-title">ATIS &amp; Takeoff</h1>
+    </div>
+    ${wind('dep')}
+    <section class="dsec">
+      <div class="dsec-head"><h2>Takeoff data</h2><button class="small-btn" data-go="#/plan">Planning ›</button></div>
+      ${(() => { const a = fd['tob.auto'] || {}, from = TOB_AUTO.filter(x => fd[x[0]] !== undefined && fd[x[0]] === a[x[0]]).map(x => x[1]); return `<p class="pmeta">${from.length ? 'From Preflight Planning (AFM Section 5): ' + esc(from.join(', ')) + '. Tap a value to override it.' : 'Calculated on Preflight Planning from the weights and the departure weather. Tap a box to type a value instead.'}</p>`; })()}
+      ${fieldCards('tob', TOB_SHOWN)}
+    </section>
+    ${wind('arr')}
+    <div class="actions" style="margin-top:6px">
+      <button class="small-btn danger" data-act="newflight">New flight (clear all)</button>
+    </div>
+    <div class="data-foot">${footer('', false)}</div>
+  </div>`;
+  fitFields();
+}
+
+/* ---------- Preflight planning: weight & balance -> AFM performance -> takeoff briefing ---------- */
+// The pilot enters the station weights (a blank one counts as 0; they are kept from flight to flight until cleared),
+// fuel in gallons, the planned flight time, temperature and pressure altitude. Every aircraft figure comes from
+// aircraft.js (AFM / N523LT's W&B record). While any is missing, planning lists it and calculates nothing.
+const PLAN_CFG_KEY = 'plan.cfg.v1';
+const EW_REC = AIRCRAFT.emptyWeight;
+// N523LT's licensed empty weight (aircraft.js, from the signed W&B record); editable if the airplane is reweighed.
+const EMPTY_DEFAULT = EW_REC.lb > 0 && EW_REC.arm > 0 ? { ew: EW_REC.lb, em: +(EW_REC.lb * EW_REC.arm).toFixed(2), src: AIRCRAFT.reg } : null;
+let planCfg = read(PLAN_CFG_KEY, null);
+if (!planCfg || typeof planCfg !== 'object' || Array.isArray(planCfg)) planCfg = Object.assign({}, EMPTY_DEFAULT || {});
+else if (EMPTY_DEFAULT && (!(+planCfg.ew > 0) || !(+planCfg.em > 0))) planCfg = Object.assign({}, planCfg, EMPTY_DEFAULT);   // keeps variation and field elevation
+const PLAN_WB = AIRCRAFT.stations;
+const STATION = {}; PLAN_WB.forEach(s => { STATION[s.k] = s; });
+const PLAN_FUEL = [
+  { k: 'plan.fuel', label: 'Fuel on board', kind: 'decimal', max: 4, unit: 'GAL' },
+  { k: 'plan.time', label: 'Planned flight time', kind: 'decimal', max: 4, unit: 'HR' }];
+// Pressure altitude comes from the altimeter setting and the field elevation (or is typed directly).
+const PLAN_WX = [
+  { k: 'plan.oat', label: 'Temperature', max: 2, unit: '°C', extra: '−' },
+  { k: 'plan.alt', label: 'Altimeter setting', kind: 'decimal', max: 5, unit: 'IN' },
+  { k: 'cfg.elev', label: 'Departure field elevation', max: 5, unit: 'FT', extra: '−' },
+  { k: 'plan.pa', label: 'Pressure altitude (blank = from altimeter)', max: 5, unit: 'FT', extra: '−' }];
+const PLAN_ARR = [
+  { k: 'plan.aoat', label: 'Temperature', max: 2, unit: '°C', extra: '−' },
+  { k: 'plan.aalt', label: 'Altimeter setting', kind: 'decimal', max: 5, unit: 'IN' },
+  { k: 'plan.aelev', label: 'Destination field elevation (blank = departure)', max: 5, unit: 'FT', extra: '−' },
+  { k: 'plan.apa', label: 'Destination pressure altitude (blank = from altimeter)', max: 5, unit: 'FT', extra: '−' },
+  { k: 'plan.ldglen', label: 'Landing runway available', max: 5, unit: 'FT' }];
+const ELEV_DEFAULT = AIRCRAFT.home.elevFt;
+const inRng = (v, a, b) => v !== null && v >= a && v <= b ? v : null;   // stored values outside the keypad ranges count as blank
+const altPA = (elev, alt) => Math.round(elev + (29.92 - alt) * 1000);   // 1,000 ft per inch from standard
+const depElev = () => { const e = inRng(pnum('cfg.elev'), -1500, 15000); return e === null ? ELEV_DEFAULT : e; };
+function depPA() {
+  const pa = inRng(pnum('plan.pa'), -1500, 25000); if (pa !== null) return { pa: pa, src: 'entered' };
+  const alt = inRng(pnum('plan.alt'), 27.5, 31.5); if (alt === null) return null;
+  const elev = depElev(); return { pa: altPA(elev, alt), src: 'altimeter', alt: alt, elev: elev };
+}
+function arrPA(D) {
+  const pa = inRng(pnum('plan.apa'), -1500, 25000); if (pa !== null) return { pa: pa, src: 'entered' };
+  const alt = inRng(pnum('plan.aalt'), 27.5, 31.5), elev = inRng(pnum('plan.aelev'), -1500, 15000);
+  if (alt === null && elev === null) return D ? Object.assign({}, D, { same: true }) : null;
+  const a = alt !== null ? alt : D && D.alt ? D.alt : inRng(pnum('plan.alt'), 27.5, 31.5), e = elev !== null ? elev : depElev();
+  if (a === null) return { pa: altPA(e, 29.92), src: 'standard', elev: e };   // no altimeter setting anywhere: standard pressure
+  return { pa: altPA(e, a), src: 'altimeter', alt: a, elev: e };
+}
+const paNote = (X, altKey) => !X ? '' : X.src === 'altimeter' ? ' (altimeter ' + X.alt.toFixed(2) + ' at ' + sgn(X.elev) + ' ft)' : X.src === 'standard' ? ' (no altimeter setting: standard pressure assumed)'
+  : X.src === 'entered' && altKey && inRng(pnum(altKey), 27.5, 31.5) !== null ? ' (typed; the altimeter setting is not used)' : '';
+const PLAN_CFG = [
+  { k: 'cfg.ew', label: 'Empty weight', kind: 'decimal', max: 7, unit: 'LB' },
+  { k: 'cfg.em', label: 'Empty weight moment', kind: 'decimal', max: 9, unit: 'IN-LB' },
+  { k: 'cfg.magvar', label: 'Magnetic variation (west; − = east)', max: 2, unit: '° W', extra: '−' }];
+PLAN_CFG.push(PLAN_WX[2]);
+PLAN_WB.forEach(s => { FIELD[s.k] = { k: s.k, label: s.label, max: 3, unit: 'LB' }; });
+PLAN_FUEL.concat(PLAN_WX, PLAN_ARR, PLAN_CFG).forEach(f => { FIELD[f.k] = f; });
+// The ATIS for each end, in broadcast order (wind, temperature, altimeter, runway) plus the runway length:
+// entered once on ATIS & Takeoff; Preflight Planning reads the same values for the AFM performance data.
+const ATIS_KEYS = {
+  dep: ['dep.wdir', 'dep.wspd', 'dep.gust', 'plan.oat', 'plan.alt', 'dep.rwy', 'tob.len'],
+  arr: ['arr.wdir', 'arr.wspd', 'arr.gust', 'plan.aoat', 'plan.aalt', 'arr.rwy', 'plan.ldglen'] };
+const atisSide = k => ATIS_KEYS.dep.indexOf(k) >= 0 ? 'dep' : ATIS_KEYS.arr.indexOf(k) >= 0 ? 'arr' : '';
+// The same values are first entered on Preflight Planning from a METAR (at the FBO; wind TRUE), then replaced in the
+// airplane from the ATIS (wind MAGNETIC). side.src says which one is in use, side.srcT when it was entered.
+const PLAN_KEYS = { dep: ATIS_KEYS.dep.concat('cfg.elev'), arr: ATIS_KEYS.arr.concat('plan.aelev') };
+const SRC_FIELDS = /^(wdir|wspd|gust|oat|alt|aoat|aalt)$/;
+const srcOf = sd => fd[sd + '.src'] === 'ATIS' || fd[sd + '.src'] === 'METAR' ? fd[sd + '.src'] : '';
+function srcHtml(sd) {
+  const s = srcOf(sd); if (!s) return '';
+  const m = fd[sd + '.srcT'] ? Math.floor((Date.now() - fd[sd + '.srcT']) / 60000) : 0, age = m > 60 ? ` <span class="warn">${ageText(m)}</span>` : '';
+  return s === 'ATIS' ? `<b>From the ATIS</b> (wind magnetic)${age}` : `<b>From the METAR</b> on Preflight Planning${isTrue(sd) ? ' (wind true)' : ''}${age}`;
+}
+const TOB_SHOWN = TOB_FIELDS.slice(1);   // takeoff data on the screen (runway available is with the departure ATIS)
+const FUEL = AIRCRAFT.fuel, LIM = AIRCRAFT.limits, GPH = AIRCRAFT.fuelFlow;
+const FUEL_MAX = FUEL.usableGal || 999;   // keypad range only; the usable-fuel check needs the AFM figure
+const POWERS = Object.keys(GPH).map(Number).filter(isFinite).sort((a, b) => b - a);
+const isNum = v => typeof v === 'number' && isFinite(v);
+// The CG envelope (AIRCRAFT.envelope, [cg, weight] corners): its weight range, and the forward / aft CG limits at a
+// weight (where a level line at that weight crosses the envelope's sides).
+const ENV = Array.isArray(AIRCRAFT.envelope) && AIRCRAFT.envelope.length >= 3 ? AIRCRAFT.envelope : null;
+function cgLimits(w) {
+  if (!ENV) return null;
+  const xs = [];
+  ENV.forEach((p, i) => {
+    const q = ENV[(i + 1) % ENV.length], lo = Math.min(p[1], q[1]), hi = Math.max(p[1], q[1]);
+    if (w < lo - 1e-9 || w > hi + 1e-9) return;
+    if (Math.abs(q[1] - p[1]) < 1e-9) xs.push(p[0], q[0]); else xs.push(p[0] + (q[0] - p[0]) * (w - p[1]) / (q[1] - p[1]));
+  });
+  return xs.length ? { fwd: Math.min.apply(null, xs), aft: Math.max.apply(null, xs) } : null;   // null: weight outside the envelope
+}
+const pnum = k => { const v = getV(k); if (v === undefined || v === null || typeof v === 'object' || String(v).trim() === '' || !isFinite(+v)) return null; return WB_KEEP.test(k) && +v < 0 ? null : +v; };
+const lbs = v => thousands(Math.round(v));
+const lbsOver = (v, lim) => v > lim && v - lim < 10 ? thousands(v.toFixed(v - lim < 0.1 ? 2 : 1)) : lbs(v);   // just over a limit: show the decimals
+const galUp = g => +(Math.ceil(g * 10 - 1e-9) / 10).toFixed(1), galDown = g => +(Math.floor(g * 10 + 1e-9) / 10).toFixed(1);
+const planPower = () => { const p = +fd['plan.power']; return GPH[p] !== undefined ? p : GPH[AIRCRAFT.defaultPower] !== undefined ? AIRCRAFT.defaultPower : POWERS[0]; };
+function planWB() {
+  const W = { rows: [], missing: [], flags: [], afm: aircraftMissing() }, ew = +planCfg.ew, em = +planCfg.em;
+  if (!(ew > 0 && em > 0)) W.missing.push('empty weight');
+  if (W.afm.length) { W.complete = false; return W; }   // nothing is calculated without the AFM figures
+  if (ew > 0 && em > 0) W.rows.push({ label: 'Empty weight', w: ew, arm: em / ew, m: em });
+  PLAN_WB.forEach(s => {
+    const v = pnum(s.k) || 0;   // a blank entry counts as 0
+    W.rows.push({ k: s.k, label: s.label, w: v, arm: s.arm, m: v * s.arm });
+    if (isNum(s.limit) && v > s.limit) W.flags.push({ bad: true, cat: 'wb', text: s.label + ' ' + lbs(v) + ' LB — limit ' + lbs(s.limit) + ' LB' });
+  });
+  AIRCRAFT.combinedLimits.forEach(c => {
+    const v = c.keys.reduce((a, k) => a + (pnum(k) || 0), 0);
+    if (v > c.limit) W.flags.push({ bad: true, cat: 'wb', text: c.label + ' ' + lbs(v) + ' LB — limit ' + lbs(c.limit) + ' LB' });
+  });
+  const gal = pnum('plan.fuel') || 0, hr = pnum('plan.time') || 0, power = planPower();   // blank = 0
+  W.hr = hr;
+  W.zfw = W.rows.reduce((a, r) => a + r.w, 0); W.zfm = W.rows.reduce((a, r) => a + r.m, 0);
+  W.gal = gal; W.fuelW = gal * FUEL.lbPerGal;
+  W.rows.push({ label: 'Fuel ' + gal + ' gal', w: W.fuelW, arm: FUEL.arm, m: W.fuelW * FUEL.arm, fuel: true });
+  if (gal > FUEL.usableGal) W.flags.push({ bad: true, cat: 'fuel', text: 'Fuel ' + gal + ' gal — maximum usable ' + FUEL.usableGal + ' gal' });
+  W.complete = !W.missing.length;
+  if (!W.complete) return W;
+  // ramp (all fuel) -> taxi fuel -> takeoff -> flight fuel burn -> landing
+  const LBG = FUEL.lbPerGal, FA = FUEL.arm;
+  W.rampW = W.zfw + W.fuelW; W.rampM = W.zfm + W.fuelW * FA;
+  W.taxiGal = Math.min(gal, FUEL.taxiGal); W.toGal = gal - W.taxiGal;
+  W.tow = W.zfw + W.toGal * LBG; W.tom = W.zfm + W.toGal * LBG * FA; W.cgTo = W.tom / W.tow;
+  W.power = power; W.needGal = hr * GPH[power]; W.burnGal = Math.min(W.toGal, W.needGal); W.ldgGal = W.toGal - W.burnGal;
+  W.lw = W.zfw + W.ldgGal * LBG; W.lm = W.zfm + W.ldgGal * LBG * FA; W.cgLdg = W.lm / W.lw;
+  const lim = (ok, good, bad, cat) => W.flags.push(ok ? { text: good } : { bad: true, cat: cat || 'wb', text: bad });
+  if (gal <= FUEL.taxiGal) lim(false, '', 'Fuel ' + gal + ' gal — no more than the ' + FUEL.taxiGal + ' gal taxi allowance: no fuel for takeoff', 'fuel');
+  else lim(W.needGal <= W.toGal + 1e-9, 'Fuel for ' + hr + ' h: ' + galUp(W.needGal) + ' of ' + galDown(W.toGal) + ' gal after taxi (' + galDown(W.toGal - W.needGal) + ' gal left; no reserve check)',
+    'Fuel for ' + hr + ' h: needs ' + galUp(W.needGal) + ' gal, only ' + galDown(W.toGal) + ' gal after taxi — FUEL EXHAUSTION', 'fuel');
+  const over = (v, l) => v - l < 0.1 ? 'less than 0.1' : v - l < 10 ? (v - l).toFixed(1) : lbs(v - l);
+  lim(W.tow <= LIM.mtow, 'Takeoff weight ' + lbs(W.tow) + ' LB (max ' + lbs(LIM.mtow) + ', ' + lbs(LIM.mtow - W.tow) + ' under)', 'Takeoff weight ' + lbsOver(W.tow, LIM.mtow) + ' LB — ' + over(W.tow, LIM.mtow) + ' LB OVER the ' + lbs(LIM.mtow) + ' maximum');
+  if (isNum(LIM.mlw)) lim(W.lw <= LIM.mlw, 'Landing weight ' + lbs(W.lw) + ' LB (max ' + lbs(LIM.mlw) + ')', 'Landing weight ' + lbsOver(W.lw, LIM.mlw) + ' LB — ' + over(W.lw, LIM.mlw) + ' LB OVER the ' + lbs(LIM.mlw) + ' maximum');
+  if (isNum(LIM.mzfw)) lim(W.zfw <= LIM.mzfw, 'Zero-fuel weight ' + lbs(W.zfw) + ' LB (max ' + lbs(LIM.mzfw) + ')', 'Zero-fuel weight ' + lbsOver(W.zfw, LIM.mzfw) + ' LB — above the ' + lbs(LIM.mzfw) + ' maximum');
+  const cgCheck = (what, cg, w) => {
+    const L = cgLimits(w);
+    if (!L) return lim(false, '', what + ' weight ' + lbs(w) + ' LB — OUTSIDE the CG envelope\'s weight range');
+    lim(cg >= L.fwd - 1e-6 && cg <= L.aft + 1e-6, what + ' CG ' + cg.toFixed(2) + ' in (limits ' + L.fwd.toFixed(2) + '–' + L.aft.toFixed(2) + ')', what + ' CG ' + cg.toFixed(2) + ' in — OUTSIDE ' + L.fwd.toFixed(2) + '–' + L.aft.toFixed(2));
+  };
+  cgCheck('Takeoff', W.cgTo, W.tow); cgCheck('Landing', W.cgLdg, W.lw);
+  W.ok = !W.flags.some(f => f.bad); W.wbBad = W.flags.some(f => f.bad && f.cat === 'wb'); W.fuelBad = W.flags.some(f => f.bad && f.cat === 'fuel');
+  return W;
+}
+// CG envelope plot (weight up, CG across) with the takeoff and landing points, scaled to the AFM envelope
+function cgPlot(W) {
+  if (!ENV) return '';
+  const cgs = ENV.map(p => p[0]), ws = ENV.map(p => p[1]);
+  const xStep = Math.max.apply(null, cgs) - Math.min.apply(null, cgs) > 12 ? 2 : 1, yStep = Math.max.apply(null, ws) - Math.min.apply(null, ws) > 1200 ? 200 : 100;
+  const x0 = Math.floor(Math.min.apply(null, cgs) - 1), x1 = Math.ceil(Math.max.apply(null, cgs) + 1);
+  const y0 = Math.floor(Math.min.apply(null, ws) / yStep) * yStep - yStep, y1 = Math.ceil(Math.max.apply(null, ws) / yStep) * yStep + yStep;
+  const Wd = 640, Hd = 372, pl = 60, pr = 14, pt = 12, pb = 52;
+  const X = v => pl + (v - x0) / (x1 - x0) * (Wd - pl - pr), Y = v => Hd - pb - (v - y0) / (y1 - y0) * (Hd - pt - pb);
+  let s = `<svg class="cg-plot" viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="CG envelope">`;
+  for (let v = Math.ceil(x0 / xStep) * xStep; v <= x1; v += xStep) s += `<line class="cg-grid" x1="${X(v)}" y1="${Y(y0)}" x2="${X(v)}" y2="${Y(y1)}"/><text class="cg-tick" x="${X(v)}" y="${Hd - pb + 18}" text-anchor="middle">${v}</text>`;
+  for (let v = y0; v <= y1; v += yStep) s += `<line class="cg-grid" x1="${X(x0)}" y1="${Y(v)}" x2="${X(x1)}" y2="${Y(v)}"/><text class="cg-tick" x="${pl - 6}" y="${Y(v) + 5}" text-anchor="end">${thousands(v)}</text>`;
+  s += `<polygon class="cg-env" points="${ENV.map(p => X(p[0]) + ',' + Y(p[1])).join(' ')}"/>`;
+  if (isNum(LIM.mlw)) { const L = cgLimits(LIM.mlw); if (L) s += `<line class="cg-mlw" x1="${X(L.fwd)}" y1="${Y(LIM.mlw)}" x2="${X(L.aft)}" y2="${Y(LIM.mlw)}"/><text class="cg-tick" x="${X(L.aft) - 4}" y="${Y(LIM.mlw) - 5}" text-anchor="end">MAX LANDING ${thousands(LIM.mlw)}</text>`; }
+  s += `<text class="cg-tick" x="${(pl + Wd - pr) / 2}" y="${Hd - 4}" text-anchor="middle">CG — inches aft of datum</text>`;
+  if (W && W.complete) {
+    s += `<line class="cg-burn" x1="${X(W.cgTo)}" y1="${Y(W.tow)}" x2="${X(W.cgLdg)}" y2="${Y(W.lw)}"/>`;
+    const dot = (cg, w, lab, dy) => `<circle class="cg-pt" cx="${X(Math.max(x0, Math.min(x1, cg)))}" cy="${Y(Math.max(y0, Math.min(y1, w)))}" r="7"/><text class="cg-lab" x="${X(Math.max(x0, Math.min(x1, cg))) + 10}" y="${Y(Math.max(y0, Math.min(y1, w))) + 5 + (dy || 0)}">${lab}</text>`;
+    const close = Math.abs(Y(W.tow) - Y(W.lw)) < 24 && Math.abs(X(W.cgTo) - X(W.cgLdg)) < 60;
+    s += dot(W.cgTo, W.tow, 'TO', close ? -12 : 0) + dot(W.cgLdg, W.lw, 'LDG', close ? 14 : 0);
+  }
+  return s + '</svg>';
+}
+// Performance from the AFM Section 5 data. Wind: headwind component (kt) of the entered wind and runway; gusts are
+// not credited; with no wind entered, calm is assumed. Headwind rounded down, tailwind up (safe side).
+function planWind(side) {
+  const c = windComp(side);
+  if (!c) return { kt: 0, note: hasWind(side) ? 'no headwind credit: wind or runway missing' : 'no ' + SIDE_NAME[side].toLowerCase() + ' wind entered: calm assumed' };
+  if (c.calm || c.vrb) return { kt: 0, note: c.vrb ? 'variable wind: no headwind credit' : '' };
+  if (c.h >= 0 && c.hG !== null && c.hG < 0) {   // a tailwind in the gusts only: counted as tailwind
+    const sp = +fd[side + '.wspd'], gx = sp ? c.hx * (+fd[side + '.gust']) / sp : 0;
+    return { kt: Math.min(-0.1, -Math.ceil(-gx * 10 - 1e-9) / 10), note: 'tailwind in the gusts' };
+  }
+  if (c.h === 0) return { kt: 0, note: '' };
+  const v = c.hx;   // the steady-wind component, not rounded to the knot
+  return { kt: v > 0 ? Math.floor(v * 10 + 1e-9) / 10 : -Math.ceil(-v * 10 - 1e-9) / 10, note: '' };
+}
+// AIRCRAFT.perf names the chart / table for each reading; null = AFM data not entered yet.
+const PERF_ROWS = [['toRun', 'Takeoff ground run', 'FT'], ['to50', 'Takeoff over 50 ft', 'FT'], ['climb', 'Climb', 'FPM'], ['ldgRun', 'Landing ground run', 'FT'], ['ldg50', 'Landing over 50 ft', 'FT']];
+function planPerf() {
+  const W = planWB(), P = { W: W, missing: W.missing.slice(), afm: W.afm, res: {} };
+  const oatC = pnum('plan.oat'), D = depPA(), pa = D ? D.pa : null;
+  if (oatC === null) P.missing.push('temperature'); if (pa === null) P.missing.push('altimeter setting (or pressure altitude)');
+  P.D = D;
+  if (P.afm.length || P.missing.length) return P;
+  if (typeof PERFCHART === 'undefined') { P.missing.push('performance charts not loaded'); return P; }
+  const C = typeof POH_CHARTS !== 'undefined' ? POH_CHARTS : {};
+  P.oatC = oatC; P.oatF = oatC * 1.8 + 32; P.pa = pa; P.da = PERFCHART.densityAltitude(pa, oatC);
+  P.dw = planWind('dep');
+  const A = arrPA(D), aoatC = pnum('plan.aoat') !== null ? pnum('plan.aoat') : oatC, apa = A ? A.pa : pa;
+  P.A = A;
+  P.aoatC = aoatC; P.aoatF = aoatC * 1.8 + 32; P.apa = apa; P.aw = planWind('arr');
+  const to = { oatC: oatC, oatF: P.oatF, pa: pa, weight: W.tow, wind: P.dw.kt }, ld = { oatC: aoatC, oatF: P.aoatF, pa: apa, weight: W.lw, wind: P.aw.kt };
+  const rd = (key, inp) => {
+    const id = AIRCRAFT.perf[key];
+    if (!id) return { id: null, value: null, pending: true, notes: ['AFM Section 5 data not entered yet'] };
+    if (!C[id]) return { id: id, value: null, notes: ['chart ' + id + ' missing'], outOfRange: true };
+    return Object.assign(PERFCHART.read(C[id], inp), { id: id, inp: inp });
+  };
+  P.res.toRun = rd('toRun', to); P.res.to50 = rd('to50', to);
+  P.res.climb = rd('climb', { da: P.da, oatC: oatC, pa: pa, weight: W.tow });
+  P.res.ldgRun = rd('ldgRun', ld); P.res.ldg50 = rd('ldg50', ld);
+  P.ra = toraFeet();
+  P.lra = pnum('plan.ldglen') || 0;   // only a length entered for the landing runway (the app does not know airports)
+  return P;
+}
+// Results go into the takeoff data fields. A value the pilot typed over is left alone. Values that planning filled in
+// follow every change of the inputs; with no answer (no AFM data, W&B or fuel problem, planning no longer complete)
+// they are cleared and the briefing shows the reason instead.
+const TOB_AUTO = [['tob.todist', 'takeoff over 50 ft']];
+function syncTob(P) {
+  const auto = fd['tob.auto'], rep = { sent: [], kept: [], none: [], why: '' };
+  if (P.afm.length || P.missing.length) { if (!auto) return rep; rep.why = P.afm.length ? 'AFM DATA MISSING' : P.missing.indexOf('performance charts not loaded') >= 0 ? 'AFM CHARTS NOT LOADED' : 'PLANNING INCOMPLETE'; }
+  else if (!P.W.ok) rep.why = P.W.wbBad ? 'W&B OUT OF LIMITS' : 'FUEL PLAN PROBLEM';
+  const r = P.res || {}, have = x => x !== null && x !== undefined;
+  const val = { 'tob.todist': r.to50 ? r.to50.value : null };
+  const a = Object.assign({}, auto || {}), note = Object.assign({}, fd['tob.note'] || {});
+  const before = JSON.stringify([TOB_AUTO.map(x => fd[x[0]]), auto || null, fd['tob.note'] || null]);
+  TOB_AUTO.forEach(([k, label]) => {
+    const v = rep.why || !have(val[k]) ? undefined : String(val[k]);
+    if (fd[k] !== undefined && fd[k] !== '' && fd[k] !== a[k]) { rep.kept.push({ k: k, label: label, chart: v }); delete note[k]; delete a[k]; return; }   // the pilot's own value
+    if (v === undefined) {
+      if (!rep.why && r.to50 && r.to50.pending && !auto) return;   // no AFM chart yet: leave the briefing blank
+      delete fd[k]; delete a[k]; note[k] = rep.why || (r.to50 && r.to50.pending ? 'AFM DATA PENDING' : 'NO CHART ANSWER — SEE PLANNING');
+      if (!rep.why) rep.none.push(label);
+    }
+    else { fd[k] = v; a[k] = v; delete note[k]; rep.sent.push(label); }
+  });
+  fd['tob.auto'] = a;
+  if (Object.keys(note).length) fd['tob.note'] = note; else delete fd['tob.note'];
+  if (JSON.stringify([TOB_AUTO.map(x => fd[x[0]]), a, fd['tob.note'] || null]) !== before) { fd._t = Date.now(); saveFd(); }
+  return rep;
+}
+// Planning runs before every screen is drawn, so the briefing always matches the current inputs.
+let planNow = null, chartView = read('chartview.v1', 'clean') === 'scan' ? 'scan' : 'clean';
+function planRefresh() {
+  try { const P = planPerf(); planNow = { P: P, rep: syncTob(P) }; }
+  catch (e) { planNow = null; }   // planning must never stop the checklists from opening
+}
+const sgn = v => thousands(v).replace(/^-/, '−');
+const negLb = v => Math.round(v) > 0 ? '−' + lbs(v) : '0';
+const windWords = w => (w.kt < 0 ? 'tailwind ' + (-w.kt) + ' KT' : 'headwind ' + w.kt + ' KT') + (w.note ? ' (' + w.note + ')' : '');
+const marginHtml = (avail, need, what) => {
+  if (!avail || !need) return '';
+  const m = avail - need;
+  return `<span class="${m < 0 ? 'warn' : 'ok'}">${m >= 0 ? thousands(m) + ' FT spare' : thousands(-m) + ' FT SHORT'} of ${thousands(avail)} ${what}</span>`;
+};
+function perfRow(label, r, extra, unit) {
+  const v = r && r.noClimb ? '<span class="warn">NO CLIMB</span>' : r && r.value !== null && r.value !== undefined ? thousands(r.value) + ' ' + unit : r && r.pending ? '<span class="pmeta">AFM pending</span>' : '<span class="warn">NO ANSWER</span>';
+  const noteCls = r && !r.pending && (r.noClimb || r.value === null || r.value === undefined) ? 'pnote warn' : 'pnote';
+  const notes = r && r.notes && r.notes.length ? `<small class="${noteCls}">${esc(r.notes.join(' · '))}</small>` : '';
+  return `<div class="prow"><div class="plab">${esc(label)}${notes}</div><div class="pval">${v}${extra ? `<small>${extra}</small>` : ''}</div>
+    ${r && r.id ? `<button class="small-btn" data-go="#/plan/chart/${r.id}">AFM ${r.id} ›</button>` : ''}</div>`;
+}
+const FIELD_RANGE = { 'plan.alt': [27.5, 31.5], 'plan.aalt': [27.5, 31.5], 'cfg.elev': [-1500, 15000], 'plan.aelev': [-1500, 15000],
+  'plan.pa': [-1500, 25000], 'plan.apa': [-1500, 25000], 'plan.oat': [-50, 55], 'plan.aoat': [-50, 55] };
+const usable = k => { const v = pnum(k), r = FIELD_RANGE[k]; return v !== null && (!r || (v >= r[0] && v <= r[1])); };   // a stored value the calculations use
+function planCards(keys, shown) {   // shown: text for a blank box whose value is worked out (e.g. pressure altitude)
+  return `<div class="fields">${keys.map(f => {
+    if (f.k === 'cfg.elev' && !usable('cfg.elev')) return `<button class="field" data-act="planfrom" data-k="${f.k}"><small>${esc(f.label)}</small><span class="val">${thousands(ELEV_DEFAULT)} <small>FT</small></span></button>`;
+    if (shown && shown[f.k] && !usable(f.k)) return `<button class="field" data-act="planfrom" data-k="${f.k}"><small>${esc(f.label)}</small><span class="blank">${esc(shown[f.k])}</span></button>`;
+    if (WB_KEEP.test(f.k) && pnum(f.k) === null) return `<button class="field" data-act="planfrom" data-k="${f.k}"><small>${esc(f.label)}</small><span class="blank">0${f.unit ? ' <small>' + esc(f.unit) + '</small>' : ''}</span></button>`;   // blank = 0
+    const v = !usable(f.k) ? '' : fmt(f.k), u = unitFor(f, v);
+    return `<button class="field" data-act="planfrom" data-k="${f.k}"><small>${esc(f.label)}</small><span class="${v ? 'val' : 'blank'}">${v ? esc(v) + (u ? ' <small>' + esc(u) + '</small>' : '') : 'tap to enter'}</span></button>`;
+  }).join('')}</div>`;
+}
+const toggle = (k, opts, cur) => `<div class="seg">${opts.map(o => `<button class="${cur === o[0] ? 'on' : ''}" data-act="planset" data-k="${k}" data-v="${o[0]}" aria-pressed="${cur === o[0]}">${o[1]}</button>`).join('')}</div>`;
+// A value the pilot typed is flagged when planning is blocked, has no answer, or the AFM figure is more conservative.
+function keptUnsafe(x, rep) {
+  const mine = +fd[x.k], ch = x.chart === undefined ? null : +x.chart;
+  return !!rep.why || ch === null || mine < ch;
+}
+// What went to the briefing, what did not and why, and the pilot's own values that were kept.
+function sentHtml(rep) {
+  if (!rep) return '';
+  let h = '';
+  if (rep.why) h += `<p class="pmeta"><span class="warn">Not sent to the takeoff briefing: ${esc({ 'W&B OUT OF LIMITS': 'weight & balance out of limits', 'FUEL PLAN PROBLEM': 'fuel plan problem', 'AFM CHARTS NOT LOADED': 'the AFM charts did not load (open the app once with internet)', 'AFM DATA MISSING': 'the AFM data is not entered yet' }[rep.why] || 'planning not complete')}.</span> The briefing shows this instead of the numbers${rep.kept.length ? ', except your own values below' : ''}.</p>`;
+  if (rep.sent.length) h += `<p class="pmeta ok">Sent to the takeoff briefing: ${esc(rep.sent.join(', '))}.</p>`;
+  if (rep.none.length) h += `<p class="pmeta"><span class="warn">No AFM answer for ${esc(rep.none.join(', '))}</span> — the briefing says so.</p>`;
+  rep.kept.forEach(x => {
+    const mine = fmt(x.k), ch = x.chart === undefined ? null : +x.chart;
+    const unsafe = keptUnsafe(x, rep);
+    h += `<p class="pmeta"><span class="${unsafe ? 'warn' : ''}">The briefing keeps your own ${esc(x.label)} ${esc(mine)} FT (AFM: ${ch === null ? (rep.why ? 'not sent' : 'no answer') : thousands(ch) + ' FT'}).</span>${ch === null ? '' : ` <button class="link" data-act="planuse" data-k="${x.k}">Use the AFM value</button>`}</p>`;
+  });
+  return h;
+}
+function renderPlan() {
+  const P = planNow ? planNow.P : planPerf(), rep = planNow ? planNow.rep : null, W = P.W;
+  const isDefault = !!EMPTY_DEFAULT && +planCfg.ew === EMPTY_DEFAULT.ew && +planCfg.em === EMPTY_DEFAULT.em, emptyOk = +planCfg.ew > 0 && +planCfg.em > 0;
+  const emptyCard = `<p class="pmeta">${isDefault ? esc(AIRCRAFT.reg) + ' · ' : ''}${emptyOk ? `empty weight ${thousands((+planCfg.ew).toFixed(1))} LB · CG ${(planCfg.em / planCfg.ew).toFixed(2)} in · moment ${thousands((+planCfg.em).toFixed(1))}` : '<span class="warn">empty weight not set</span>'}
+      <button class="link" data-act="planempty">change</button></p>${isDefault || !EMPTY_DEFAULT ? '' : `<p class="pmeta"><button class="link" data-act="planreset">use ${esc(AIRCRAFT.reg)} (${thousands(EMPTY_DEFAULT.ew.toFixed(1))} LB at ${EW_REC.arm.toFixed(2)})</button></p>`}`;
+  const afmCard = W.afm.length ? `<p class="pmeta"><span class="warn">Waiting for AFM / weight &amp; balance data: ${esc(W.afm.join(' · '))}.</span> Weight &amp; balance and performance are not calculated until these are entered from the documents.</p>` : '';
+  const wbTable = W.rows.length ? `<table class="wbt"><tr><th>Item</th><th>Weight</th><th>Arm</th><th>Moment</th></tr>
+      ${W.rows.map(r => `<tr><td>${esc(r.label)}</td><td>${lbs(r.w)}</td><td>${r.arm.toFixed(1)}</td><td>${lbs(r.m)}</td></tr>`).join('')}
+      ${W.complete ? `<tr class="tot"><td>Ramp</td><td>${lbs(W.rampW)}</td><td>${(W.rampM / W.rampW).toFixed(2)}</td><td>${lbs(W.rampM)}</td></tr>
+      <tr><td>Taxi fuel ${W.taxiGal} gal</td><td>${negLb(W.taxiGal * FUEL.lbPerGal)}</td><td>${FUEL.arm}</td><td>${negLb(W.taxiGal * FUEL.lbPerGal * FUEL.arm)}</td></tr>
+      <tr class="tot"><td>Takeoff</td><td>${lbs(W.tow)}</td><td>${W.cgTo.toFixed(2)}</td><td>${lbs(W.tom)}</td></tr>
+      <tr><td>Fuel burn ${W.hr} h at ${W.power}% (${GPH[W.power].toFixed(1)} gph = ${galUp(W.needGal)} gal${W.burnGal < W.needGal - 1e-9 ? `; only ${galDown(W.burnGal)} on board` : ''})</td><td>${negLb(W.burnGal * FUEL.lbPerGal)}</td><td>${FUEL.arm}</td><td>${negLb(W.burnGal * FUEL.lbPerGal * FUEL.arm)}</td></tr>
+      <tr class="tot"><td>Landing</td><td>${lbs(W.lw)}</td><td>${W.cgLdg.toFixed(2)}</td><td>${lbs(W.lm)}</td></tr>` : ''}</table>` : '';
+  const flags = W.flags.length ? `<ul class="flags">${W.flags.map(f => `<li class="${f.bad ? 'bad' : 'good'}">${f.bad ? '✕' : '✓'} ${esc(f.text)}</li>`).join('')}</ul>` : '';
+  let perf;
+  const todo = P.missing.filter(m => m !== 'performance charts not loaded');
+  const flow = AIRCRAFT.chartFlow;
+  const chartList = flow.length ? `<div class="actions charts">${flow.map(id => `<button class="small-btn" data-go="#/plan/chart/${id}">AFM ${id} · ${esc(AIRCRAFT.chartName[id] || '')} ›</button>`).join('')}</div>` : '';
+  if (P.afm.length) perf = `<p class="pmeta">No performance figures until the AFM Section 5 data and the weight &amp; balance data are entered.</p>` + chartList + sentHtml(rep);
+  else if (P.missing.length) perf = (todo.length ? `<p class="pmeta">To work out the numbers, enter: <b>${esc(todo.join(', '))}</b> (Conditions above).${chartList ? ' The charts can be opened now:' : ''}</p>` : `<p class="pmeta"><span class="warn">The AFM charts did not load.</span> Open the app once with internet to finish the offline copy.</p>`) + chartList + sentHtml(rep);
+  else {
+    const r = P.res, da = Math.round(P.da);
+    perf = `<p class="pmeta">${sgn(P.oatC)} °C · pressure altitude ${sgn(P.pa)}${esc(paNote(P.D, 'plan.alt'))} · density altitude ${sgn(da)} · takeoff ${lbs(W.tow)} LB · ${esc(windWords(P.dw))}</p>
+      ${perfRow('Takeoff ground run', r.toRun, '', 'FT')}
+      ${perfRow('Takeoff over 50 ft', r.to50, marginHtml(P.ra, r.to50.value, 'runway available'), 'FT')}
+      ${perfRow('Climb', r.climb, r.climb.speed ? 'at ' + r.climb.speed + ' KIAS' : '', 'FPM')}
+      <p class="pmeta">Landing at ${lbs(W.lw)} LB · ${sgn(P.aoatC)} °C · pressure altitude ${sgn(P.apa)}${P.A && !P.A.same ? esc(paNote(P.A, 'plan.aalt')) : ''} · ${esc(windWords(P.aw))}</p>
+      ${perfRow('Landing ground run', r.ldgRun, '', 'FT')}
+      ${perfRow('Landing over 50 ft', P.lra || r.ldg50.pending ? r.ldg50 : Object.assign({}, r.ldg50, { notes: (r.ldg50.notes || []).concat('enter the landing runway length under Destination for a margin') }), P.lra ? marginHtml(P.lra, r.ldg50.value, 'landing runway') : '', 'FT')}
+      ${sentHtml(rep)}`;
+  }
+  const powerRow = POWERS.length ? `<div class="prow"><div class="plab">Cruise power<small class="pnote">${W.power ? 'fuel burn ' + GPH[W.power].toFixed(1) + ' gph' + (AIRCRAFT.fuelFlowSrc ? ' (' + esc(AIRCRAFT.fuelFlowSrc) + ')' : '') : ''}</small></div>${toggle('plan.power', POWERS.slice().reverse().map(p => [String(p), p + '%']), String(planPower()))}</div>` : '';
+  $app.innerHTML = `<div class="wrap data plan">
+    <div class="home-head with-back">
+      ${homeTile()}
+      <button class="next-tile" data-go="${esc(dataReturn)}"><small>← Back to</small><span>${esc(returnLabel())}</span></button>
+      <h1 class="group-title">Preflight Planning</h1>
+      ${(() => { const n = planNext(); return n ? `<button class="next-tile" data-go="#/list/${n.id}" aria-label="Next: ${esc(n.title)}"><small>Next →</small><span>${tileLabel(n.title)}</span></button>` : ''; })()}
+    </div>
+    ${afmCard}${emptyCard}
+    <section class="dsec">
+      <div class="dsec-head"><h2>Weight &amp; balance</h2><button class="small-btn go" data-act="planall" data-set="wb">Enter</button></div>
+      <p class="pmeta">Kept from flight to flight until you clear it. A blank entry counts as 0.</p>
+      ${planCards(PLAN_WB.map(s => FIELD[s.k]).concat(PLAN_FUEL))}
+      ${powerRow}
+      ${wbTable}${flags}${cgPlot(W)}
+      <div class="actions wbclear"><button class="small-btn danger" data-act="wbclear">Clear W&amp;B entries</button></div>
+    </section>
+    <section class="dsec">
+      <div class="dsec-head"><h2>Conditions</h2><button class="small-btn go" data-act="planall" data-set="wx">Enter</button></div>
+      <p class="pmeta">Departure weather for the AFM performance data — from the METAR here, or later from the ATIS (which replaces it). ${srcHtml('dep')}</p>
+      <div class="calc"><small>${sideRwy('dep') ? 'Runway ' + esc(sideRwy('dep')) : 'Runway —'}${windText('dep') ? SEP + esc(windText('dep')) : ''}</small>${windComp('dep') ? compHtml(windComp('dep')) : '—'}</div>
+      ${atisCards('dep', PLAN_KEYS.dep, 'plan')}
+      ${(() => { const D = depPA(); return planCards([FIELD['plan.pa']], { 'plan.pa': D && D.src === 'altimeter' ? sgn(D.pa) + ' FT from altimeter' : '' }); })()}
+      <p class="pmeta">${isTrue('dep') ? `Wind is <b>true</b> (METAR): turned to magnetic with ${varText(magVar())} variation. <button class="link" data-act="magvar">change variation</button> <button class="link" data-act="wref" data-tab="dep">wind is magnetic</button>` : `Wind is <b>magnetic</b> (ATIS / tower). <button class="link" data-act="wref" data-tab="dep">wind is true (METAR)</button>`}</p>
+      <details class="arrd"${PLAN_KEYS.arr.concat('plan.apa').some(k => fd[k] !== undefined) ? ' open' : ''}><summary>Destination (blank = same as departure)</summary>
+        <div class="actions"><button class="small-btn go" data-act="planall" data-set="arrwx">Enter destination METAR</button></div>
+        <p class="pmeta">${srcHtml('arr')}</p>
+        ${atisCards('arr', PLAN_KEYS.arr, 'plan')}
+        ${(() => { const A = arrPA(depPA()); return planCards([FIELD['plan.apa']], { 'plan.apa': A ? sgn(A.pa) + ' FT' + (A.same ? ' (departure)' : A.src === 'standard' ? ' (standard pressure)' : ' from altimeter') : '' }); })()}</details>
+    </section>
+    <section class="dsec">
+      <div class="dsec-head"><h2>Performance (AFM Section 5)</h2></div>
+      ${perf}
+    </section>
+    <div class="data-foot">${footer('', false)}</div>
+  </div>`;
+  fitFields();
+}
+// The charts in flight order for Previous / Next (AIRCRAFT.chartFlow), with short names for the tiles.
+const CHART_FLOW = AIRCRAFT.chartFlow, CHART_NAME = AIRCRAFT.chartName, CHART_SHORT = AIRCRAFT.chartShort;
+function chartStep(id) {
+  const i = CHART_FLOW.indexOf(id), at = j => j >= 0 && j < CHART_FLOW.length ? CHART_FLOW[j] : null;
+  return i < 0 ? { prev: null, next: null } : { prev: at(i - 1), next: at(i + 1) };
+}
+const chartTile = (id, dir) => `<button class="next-tile chart-nav" data-go="#/plan/chart/${id}" aria-label="${dir === 'next' ? 'Next' : 'Previous'} chart: AFM ${id} ${esc(CHART_NAME[id] || '')}"><small>${dir === 'next' ? 'Next →' : '← Previous'}</small><span>${esc(CHART_SHORT[id] || CHART_NAME[id] || id)}</span></button>`;
+const NAV_PH = '<span class="next-tile chart-nav nav-ph" aria-hidden="true"></span>';   // keeps Previous / Next in their places at the ends of the flow
+// One chart, with the reading drawn on it in red
+function renderPlanChart(id) {
+  const P = planNow ? planNow.P : planPerf(), C = typeof POH_CHARTS !== 'undefined' ? POH_CHARTS : {}, c = C[id];
+  let r = null, key = null;
+  if (P.res) Object.keys(P.res).forEach(k => { if (P.res[k] && P.res[k].id === id) { r = P.res[k]; key = k; } });
+  const ldg = key === 'ldgRun' || key === 'ldg50';
+  if (!r && c && c.panels && !P.missing.length && !P.afm.length) r = Object.assign(PERFCHART.read(c, c.kind === 'climb' ? { da: P.da, oatC: P.oatC, pa: P.pa, weight: P.W.tow } : { oatC: P.oatC, oatF: P.oatF, pa: P.pa, weight: P.W.tow, wind: P.dw.kt }), { id: id });
+  const inp = r && r.inputs ? r.inputs : null, unit = !c ? 'FT' : { climb: 'FPM' }[c.kind] || 'FT';
+  const scan = chartView === 'scan';
+  let pic = '';
+  if (c && c.panels) { try { pic = scan ? `<img src="${esc(c.img)}" alt="AFM chart ${esc(id)} (scan)">${r && r.segs ? PERFCHART.overlay(c, r, {}) : ''}` : PERFCHART.draw(c, inp ? r : null, {}); } catch (e) { pic = `<img src="${esc(c.img)}" alt="AFM chart ${esc(id)} (scan)">`; } }
+  const desc = P.afm.length ? 'Weight & balance needs the AFM data first' : P.missing.length ? 'Enter ' + P.missing.join(', ') + ' on Preflight Planning'
+    : c && c.kind === 'climb' ? `Density altitude ${sgn(Math.round(P.da))} FT · ${sgn(P.oatC)} °C · weight ${lbs(P.W.tow)} LB`
+    : `${sgn(ldg ? P.aoatC : P.oatC)} °C · pressure altitude ${sgn(ldg ? P.apa : P.pa)} FT · weight ${lbs(ldg ? P.W.lw : P.W.tow)} LB · ${windWords(ldg ? P.aw : P.dw)}`;
+  const factor = c && c.factorNote && r && r.value !== null && r.chartValue !== undefined
+    ? `<small>chart line ${thousands(Math.round(r.chartValue))} ${unit} × ${c.factor.toFixed(3)}: this chart is scaled to give the AFM's printed example (${thousands(c.example.answer)} ${unit})</small>` : '';
+  const step = chartStep(id);
+  $app.innerHTML = `<div class="wrap data">
+    <div class="home-head chart-head">
+      ${homeTile()}
+      <button class="next-tile" data-go="#/plan"><small>← Back to</small><span>Planning</span></button>
+      <span class="spacer"></span>
+      ${step.prev ? chartTile(step.prev, 'prev') : NAV_PH}
+      ${step.next ? chartTile(step.next, 'next') : NAV_PH}
+    </div>
+    <h1 class="group-title chart-title">AFM ${esc(id)}${CHART_NAME[id] ? ' · ' + esc(CHART_NAME[id]) : ''}</h1>
+    ${c ? `<p class="pmeta"><b>${esc(c.title || '')}</b>${c.conditions ? ' · ' + esc(c.conditions) : ''}</p>
+      <div class="calc"><small>${esc(desc)}</small>${r && r.noClimb ? '<span class="warn">NO CLIMB</span>' : r && r.value !== null && r.value !== undefined ? thousands(r.value) + ' ' + unit + (r.speed ? SEP + 'at ' + r.speed + ' KIAS' : '') : '<span class="warn">NO ANSWER</span>'}${r && r.notes && r.notes.length ? `<small>${esc(r.notes.join(' · '))}</small>` : ''}${factor}</div>
+      ${c.panels ? `<div class="prow chartview"><div class="plab">${scan ? 'The AFM page (scan)' : 'Redrawn from the AFM chart'}<small class="pnote">${scan ? 'the original page' : 'the traced lines the numbers come from; compare with the AFM scan'}</small></div>${toggle('chartview', [['clean', 'Clean'], ['scan', 'AFM scan']], scan ? 'scan' : 'clean')}</div>
+      <div class="chartbox${scan ? '' : ' clean'}"><div class="chartin">${pic}</div></div>${typeof window !== 'undefined' && window.innerWidth < 600 ? '<p class="pmeta">Swipe the chart sideways to see all of it.</p>' : ''}` : ''}`
+      : `<p class="pmeta"><span class="warn">${typeof PERFCHART === 'undefined' || typeof POH_CHARTS === 'undefined' ? 'The AFM charts did not load. Open the app once with internet to finish the offline copy.' : 'This chart is not available.'}</span></p>`}
+    <div class="data-foot">${footer('', false)}</div>
+  </div>`;
+  layoutBar();
+}
+
+/* ---------- Groups and flow ---------- */
+// A checklist's "group" is a path like "Emergency/Electrical". Each level is a tile screen: the home
+// screen shows top-level groups, a group screen shows its sub-groups and its own checklists.
+// Side groups (Maneuvers) sit behind a small button on the home screen instead of a big tile.
+const SIDE_GROUPS = ['maneuvers'];
+const cleanGroup = g => (g || '').split('/').map(x => x.trim()).filter(Boolean).join('/');
+const rootOf = g => cleanGroup(g).split('/')[0];
+const isEmergency = g => /emerg/i.test(g || '');
+const isSide = g => SIDE_GROUPS.includes(rootOf(g).toLowerCase());
+const inFlow = l => !isEmergency(l.group) && !isSide(l.group);
+function groups(path) {
+  const out = [], by = {}, prefix = path ? path + '/' : '';
+  for (const l of lists) {
+    if (meta(l).hidden) continue;
+    const g = cleanGroup(l.group);
+    if (!path && g && isSide(g)) continue;
+    if (g === path) { out.push({ list: l }); continue; }
+    if (path && !g.startsWith(prefix)) continue;
+    const name = g.slice(prefix.length).split('/')[0], full = prefix + name;
+    if (!by[full]) { by[full] = { name, path: full, color: l.color }; out.push(by[full]); }
+  }
+  return out;
+}
+const sideGroups = () => [...new Set(lists.filter(l => isSide(l.group) && !meta(l).hidden).map(l => rootOf(l.group)))];
+const groupHash = g => '#/g/' + encodeURIComponent(g);
+const lastPart = g => g.split('/').pop();
+const parentOf = g => g.split('/').slice(0, -1).join('/');
+// Next / Previous follow the normal procedures in order (crossing groups), stay inside a side group
+// (Maneuvers), skip hidden and branch checklists, and never touch emergencies.
+function nextOf(l, step) {
+  const m = meta(l);
+  if (m.hidden || m.branch || isEmergency(l.group)) return null;
+  let i = lists.indexOf(l);
+  for (;;) {
+    i += step || 1;
+    const n = lists[i]; if (!n) return null;
+    const nm = meta(n); if (nm.hidden || nm.branch) continue;
+    if (isEmergency(n.group)) return null;
+    if (cleanGroup(n.group) === cleanGroup(l.group)) return n;
+    if (inFlow(l) && inFlow(n)) return n;
+    return null;
+  }
+}
+const prevOf = l => nextOf(l, -1);
+// Preflight Planning's Next: Airplane Status (or, if renamed, the first checklist of the Preflight group).
+const planNext = () => lists.find(l => /^airplane status$/i.test((l.title || '').trim()) && !meta(l).hidden)
+  || lists.find(l => /^preflight$/i.test(cleanGroup(l.group)) && !meta(l).hidden && !meta(l).branch);
+
+/* ---------- Screens ---------- */
+// Tile labels never break at a hyphen ("Run-up") or between a number and its unit ("80 KIAS").
+const tileLabel = t => esc(seps(t).replace(/(\w)-(\w)/g, '$1\u2011$2').replace(/(\d'?) (KIAS|AGL|FT|KT)\b/g, '$1\u00a0$2'));
+const tileHtml = (label, color, hash) =>
+  `<button class="tile" style="background:${esc(color)}" data-go="${esc(hash)}"><span class="tl">${tileLabel(label)}</span></button>`;
+const groupTile = g => g.list ? tileHtml(g.list.title, g.list.color, `#/list/${g.list.id}`) : tileHtml(g.name, g.color, groupHash(g.path));
+const inSafariTab = () => navigator.standalone === false && !(window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+
+function renderHome() {
+  const tiles = tileHtml('Preflight Planning', '#a37800', '#/plan') + groups('').map(groupTile).join('') + tileHtml('ATIS & Takeoff', '#0f7f8a', '#/data');
+  const banner = (!isPristine(lists) && updateWaiting() ? `<div class="banner">Updated DA40 checklists are available — Edit › Restore DA40 defaults (your edits are kept until then).</div>` : '')
+    + (inSafariTab() ? `<div class="banner">Running in Safari, not installed — for offline use: Share › Add to Home Screen (its data is kept separately from this tab).</div>` : '')
+    + (wakeHint() ? `<button class="banner" data-act="wakehint">This device may let the screen lock in flight: Settings › Display &amp; Brightness › Auto-Lock › Never. (Tap to hide)</button>` : '');
+  $app.innerHTML = `<div class="home">
+    <div class="home-head">
+      <h1>DA40 Checklists</h1>
+      ${sideGroups().map(g => `<button class="small-btn" data-go="${groupHash(g)}">${esc(g)}</button>`).join('')}
+      <button class="small-btn" data-act="theme" aria-label="Display mode: ${THEME_LABEL[theme][1]}">${THEME_LABEL[theme][0]}<span class="lbl"> ${THEME_LABEL[theme][1]}</span></button>
+      <button class="small-btn" data-go="#/edit">Edit</button>
+    </div>
+    ${banner}
+    ${lists.length ? `<div class="tiles">${tiles}</div>` : `<div class="empty-msg">No checklists yet. Tap <b>Edit</b> to add one.</div>`}
+    ${wxLine(curPhase(), false)}
+  </div>`;
+  layout();
+}
+
+function renderGroup(path) {
+  path = cleanGroup(path);
+  const items = groups(path);
+  if (!path || !items.length) return go('#/');
+  const parent = parentOf(path);
+  $app.innerHTML = `<div class="home">
+    <div class="home-head${parent ? ' with-back' : ''}">
+      ${homeTile()}
+      ${parent ? `<button class="next-tile" data-go="${groupHash(parent)}"><small>↑ Back to</small><span>${esc(lastPart(parent))}</span></button>` : ''}
+      <h1 class="group-title">${esc(lastPart(path))}</h1>
+    </div>
+    <div class="tiles">${items.map(groupTile).join('')}</div>
+    ${footer(wxLine(curPhase(), false), isEmergency(path), (items.find(x => x.list) || {}).list ? meta(items.find(x => x.list).list).emerg : '')}
+  </div>`;
+  layout();
+}
+
+// Tile grid: pick the column count that gives the best-shaped tiles, then the biggest font at which every
+// label fits with whole words (words only break if nothing fits even at 16px).
+function layoutTiles() {
+  const grid = $app.querySelector('.tiles'); if (!grid) return;
+  const tiles = [...grid.children], n = tiles.length, W = grid.clientWidth, H = grid.clientHeight;
+  const gap = parseFloat(getComputedStyle(grid).rowGap || getComputedStyle(grid).gridRowGap) || 14;
+  if (!n || !W) return;
+  const minRow = H < 420 || W < 360 ? 64 : 90;
+  const cands = [];
+  for (let cols = 1; cols <= Math.min(n, 6); cols++) {
+    const rows = Math.ceil(n / cols), tw = (W - gap * (cols - 1)) / cols, th = (H - gap * (rows - 1)) / rows;
+    let score = Math.abs(Math.log((tw / th) / 1.4)) + (n % cols ? 0.15 : 0) + (cols > 4 ? 0.5 : 0);
+    if (th < minRow) score += 10;   // rows shorter than this: the grid would run off the screen
+    if (tw < 110) score += 4;
+    cands.push({ cols, rows, score });
+  }
+  cands.sort((a, b) => a.score - b.score);
+  const pads = tiles.map(t => { const cs = getComputedStyle(t); return [parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight), parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)]; });
+  const apply = c => {
+    grid.style.gridTemplateColumns = `repeat(${c.cols}, minmax(0, 1fr))`;
+    tiles.forEach(t => t.style.gridColumn = '');
+    if (n % c.cols) tiles[n - 1].style.gridColumn = `span ${c.cols - (n - 1) % c.cols}`;   // fill the last row
+    grid.style.gridAutoRows = Math.max(minRow, Math.floor((H - gap * (c.rows - 1)) / c.rows)) + 'px';
+  };
+  // The label (not the tile) must fit inside the tile's padding.
+  const fits = px => {
+    grid.style.fontSize = px + 'px';
+    return !tiles.some((t, i) => {
+      const l = t.firstElementChild || t;
+      return l.scrollWidth > l.clientWidth + 1 || l.offsetWidth > t.clientWidth - pads[i][0] + 1 || l.offsetHeight > t.clientHeight - pads[i][1] + 1;
+    });
+  };
+  grid.classList.remove('anywhere');
+  let chosen = null;
+  for (const c of cands) { apply(c); if (fits(16)) { chosen = c; break; } }
+  if (!chosen) { apply(cands[0]); grid.classList.add('anywhere'); grid.style.fontSize = '16px'; return; }
+  let lo = 16, hi = 46;
+  if (fits(hi)) lo = hi;
+  else while (hi - lo > 1) { const mid = (lo + hi) >> 1; fits(mid) ? lo = mid : hi = mid; }
+  grid.style.fontSize = lo + 'px';
+}
+
+// A button target that is not a checklist title may name a group ("Single Engine Operations"), which opens its tiles.
+function findGroup(name) {
+  const n = normTitle(name), gs = [...new Set(lists.map(l => cleanGroup(l.group)))];
+  const all = gs.reduce((a, g) => a.concat(g.split('/').map((_, i, p) => p.slice(0, i + 1).join('/'))), []);
+  return all.find(g => normTitle(g) === n) || all.find(g => normTitle(lastPart(g)) === n) || null;
+}
+function choiceButtons(choices) {
+  return choices.map((c, i) => {
+    const t = findByTitle(c.target), g = t ? null : findGroup(c.target);
+    return t ? `<button class="choice c${i % 4}" data-go="#/list/${t.id}">${esc(c.label)}<small>${esc(c.sub || t.title)}</small></button>`
+         : g ? `<button class="choice c${i % 4}" data-go="${groupHash(g)}">${esc(c.label)}<small>${esc(c.sub || lastPart(g))}</small></button>`
+             : `<button class="choice missing" disabled>${esc(c.label)}<small>Not found: ${esc(c.target)}</small></button>`;
+  }).join('');
+}
+function renderList(id) {
+  const l = find(id);
+  if (!l) return go('#/');
+  const m = meta(l), ps = phaseSide(l);
+  if (ps) { const ph = ps === 'arr' ? 'arr' : 'dep'; if (fd._phase !== ph) { fd._phase = ph; saveFd(); } }
+  const blocks = parse(l.text), choices = blocks.filter(b => b.type === 'choice');
+  const body = blocks.filter(b => b.type !== 'choice').map(b => {
+    if (b.type === 'section') return `<div class="sec">${esc(b.text)}</div>`;
+    if (b.type === 'note') return `<div class="note">⚠︎ ${nob(b.text)}</div>`;
+    if (b.type === 'table') {
+      const cols = `<colgroup><col style="width:${b.rows[0].length > 4 ? 19 : 30}%">${'<col>'.repeat(Math.max(0, b.rows[0].length - 1))}</colgroup>`;   // same widths in both halves
+      const tbl = rows => `<table class="tbl">${cols}${rows.map((r, i) => `<tr>${r.map(c => i === 0 ? `<th>${esc(c).replace(' ', '<br>')}</th>` : `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table>`;   // headers on two even lines
+      const body = b.rows.slice(1), half = Math.ceil(body.length / 2);
+      return body.length > 10 ? tbl([b.rows[0]].concat(body.slice(0, half))) + tbl([b.rows[0]].concat(body.slice(half))) : tbl(b.rows);
+    }
+    if (b.type === 'text') {
+      const tk = rowKeys(b.text);
+      return `<div class="row text${b.hl ? ' ' + b.hl : ''}${tk.length ? ' tap' : ''}"${tk.length ? ` data-keys="${tk.join(' ')}" role="button" tabindex="0"` : ''}><span class="c">${fillTokens(nob(b.text))}</span></div>`;
+    }
+    const ks = rowKeys(b.c + ' ' + b.r);
+    return `<div class="row${b.hl ? ' ' + b.hl : ''}${ks.length ? ' tap' : ''}"${ks.length ? ` data-keys="${ks.join(' ')}" role="button" tabindex="0"` : ''}><span class="c">${fillTokens(brk(b.c))}</span><span class="lead"></span><span class="r">${fillTokens(brk(b.r))}</span></div>`;
+  }).join('');
+  const next = nextOf(l), prev = prevOf(l), g = cleanGroup(l.group);
+  const showBack = g && !(prev && normTitle(prev.title) === normTitle(lastPart(g)));
+  let wx;
+  if (m.atis) wx = wxLine(m.atis, true);
+  else if (ps === 'none') wx = '';
+  else if (ps) wx = wxLine(ps, true);
+  else wx = wxLine(curPhase(), false);
+  const emer = isEmergency(l.group);
+  $app.innerHTML = `<div class="page${emer ? ' emer' : ''}" data-id="${esc(l.id)}">
+    <div class="bar">
+      ${homeTile()}
+      ${showBack ? `<button class="next-tile" data-go="${groupHash(g)}" aria-label="Back to ${esc(lastPart(g))}"><small>↑ Back to</small><span data-full="${esc(lastPart(g))}">${esc(lastPart(g))}</span></button>` : ''}
+      <span class="spacer"></span>
+      ${prev ? `<button class="next-tile" data-go="#/list/${prev.id}" aria-label="Previous: ${esc(prev.title)}"><small>← Previous</small><span data-full="${esc(prev.title)}">${tileLabel(prev.title)}</span></button>` : ''}
+      ${next ? `<button class="next-tile" data-go="#/list/${next.id}" aria-label="Next: ${esc(next.title)}"><small>Next →</small><span data-full="${esc(next.title)}">${tileLabel(next.title)}</span></button>` : ''}
+    </div>
+    <h2 class="list-title">${nob(l.title).replace(/(\d) (KIAS|AGL|FT)/g, '$1\u00a0$2')}</h2>
+    ${m.subs.map(v => { const [a, b] = v.split('|').map(x => x.trim()); return `<p class="list-sub">${esc(a)}${b ? `<small>${esc(b)}</small>` : ''}</p>`; }).join('')}
+    <div class="fit"><div class="sheet">${body || '<div class="empty-msg">This checklist is empty.</div>'}</div></div>
+    ${choices.length ? `<div class="choices">${choiceButtons(choices)}</div>` : ''}
+    ${footer(wx, emer, m.emerg)}
+    ${emer ? `<div class="scan" aria-hidden="true">${SCAN_TEXT}</div>` : ''}
+  </div>`;
+  layout();
+}
+
+// Size the checklist so it fits on one screen without scrolling:
+//  1. Largest font up to a comfortable maximum with every item on one line (one or two columns).
+//  2. Only if that would be too small, let a few long items wrap (when it is clearly bigger).
+//  3. If still small, let any item wrap.  4. Spare height becomes line spacing, not bigger text.
+//  5. If nothing fits even at 16px, scroll, with a "MORE" cue and the buttons after the last item.
+// Results are remembered per checklist and screen size (and invalidated when the styles change).
+const LAYOUT_KEY = 'layout.v2';
+const CSS_SIG = fnv(document.querySelector('style').textContent) + ':' + APP_VERSION;
+let layoutStore = read(LAYOUT_KEY, null);
+if (!layoutStore || layoutStore.sig !== CSS_SIG || typeof layoutStore.map !== 'object') layoutStore = { sig: CSS_SIG, map: {} };
+const layoutKeep = {};   // this session's last layout per checklist and screen size
+function layoutList() {
+  const page = $app.querySelector('.page'), fit = $app.querySelector('.fit'), sheet = $app.querySelector('.sheet'); if (!fit || !page) return;
+  const ch = page.querySelector('.choices'); if (ch && ch.parentElement === fit) page.insertBefore(ch, fit.nextSibling);
+  const cue = fit.querySelector('.more-cue'); if (cue) cue.remove();
+  fit.classList.remove('scroll');
+  const cs = getComputedStyle(fit);
+  const H = fit.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const W = fit.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  if (!(H > 0 && W > 0)) return;
+  const rowEls = [...sheet.querySelectorAll('.row')], items = rowEls.filter(r => !r.classList.contains('text')), tables = [...sheet.querySelectorAll('.tbl')];
+  const set = (cols, px, wrap, pad) => {
+    sheet.style.columnCount = cols; sheet.style.fontSize = px + 'px'; sheet.classList.toggle('two', cols > 1);
+    sheet.style.maxWidth = cols > 1 ? 'none' : Math.min(W, 1000) + 'px';   // one column: no metre-long dot leaders
+    sheet.style.setProperty('--rp', pad + 'em'); sheet.classList.toggle('wrapr', !!wrap);
+  };
+  let allowWrapped = Math.max(1, Math.floor(items.length / 5)), anyWrap = false;
+  const fits = (cols, px, wrap, pad) => {
+    set(cols, px, wrap, pad === undefined ? PAD : pad);
+    if (sheet.scrollHeight > H + 1 || sheet.scrollWidth > W + 1) return false;
+    if (tables.length) {
+      const cs = getComputedStyle(sheet), colW = (sheet.clientWidth - (cols - 1) * (parseFloat(cs.columnGap) || 0)) / cols;
+      if (tables.some(t => t.getBoundingClientRect().width > colW + 1)) return false;
+      if (tables.some(t => [...t.querySelectorAll('td, th')].some(c => c.scrollWidth > c.clientWidth + 1))) return false;   // a number wider than its cell
+    }
+    if (wrap && allowWrapped !== Infinity && items.filter(r => [...r.children].some(x => x.offsetHeight > px * 1.95)).length > allowWrapped) return false;
+    const padR = rowEls.length ? parseFloat(getComputedStyle(rowEls[0]).paddingRight) : 0;
+    return !rowEls.some(r => r.lastElementChild.getBoundingClientRect().right > r.getBoundingClientRect().right - padR + 0.5);
+  };
+  const enableScroll = () => {
+    fit.classList.add('scroll');
+    if (ch) fit.appendChild(ch);
+    const c = document.createElement('div'); c.className = 'more-cue'; c.innerHTML = '<span>MORE ↓</span>'; fit.appendChild(c);
+    const upd = () => c.classList.toggle('gone', fit.scrollTop + fit.clientHeight >= fit.scrollHeight - 4);
+    fit.addEventListener('scroll', upd, { passive: true }); upd();
+  };
+  const MIN = 16, MAX = 34, WRAP_BELOW = 24, PAD = 0.22, PAD_MAX = 0.9;
+  const lkey = page.dataset.id + ':' + Math.round(W) + 'x' + Math.round(H), hash = fnv(sheet.innerHTML);
+  const hit = layoutStore.map[lkey], textSig = fnv(String((find(page.dataset.id) || {}).text || ''));
+  if (hit && hit[6]) allowWrapped = Infinity;   // that layout was found with "any line may wrap"
+  if (hit && hit[0] === hash) {
+    set(hit[1], hit[2], hit[3], hit[4]);
+    if (hit[5]) return enableScroll();
+    if (fits(hit[1], hit[2], hit[3], hit[4])) { layoutKeep[lkey] = hit.concat(textSig); return; }   // still fits (styles or fonts unchanged)
+  }
+  // While flight data is being entered on this screen (same checklist text, same session), keep the size if it
+  // still fits, so the text doesn't jump around with every value. A fresh visit later sizes it from scratch.
+  const keep = layoutKeep[lkey];
+  allowWrapped = keep && keep[6] ? Infinity : Math.max(1, Math.floor(items.length / 5));
+  if (keep && keep[7] === textSig && !keep[5] && fits(keep[1], keep[2], keep[3], keep[4])) return;
+  allowWrapped = Math.max(1, Math.floor(items.length / 5));
+  const remember = (cols, px, wrap, pad, scroll) => {
+    if (Object.keys(layoutStore.map).length > 600) layoutStore.map = {};
+    const e = [hash, cols, px, wrap ? 1 : 0, +pad.toFixed(3), scroll ? 1 : 0, anyWrap ? 1 : 0];
+    layoutStore.map[lkey] = e; layoutKeep[lkey] = e.concat(textSig); write(LAYOUT_KEY, layoutStore);
+  };
+  const best = (cols, wrap) => {
+    if (!fits(cols, MIN, wrap)) return 0;
+    if (fits(cols, MAX, wrap)) return MAX;
+    let lo = MIN, hi = MAX;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; fits(cols, mid, wrap) ? lo = mid : hi = mid; }
+    return lo;
+  };
+  // An alternative must be clearly bigger to win. Near the minimum 2 px is enough. A two-column layout that squeezes
+  // more than one label onto three or more lines never beats one at 18 px or more (one item per line reads faster).
+  const squeezed = k => { set(k.cols, k.px, k.wrap, PAD); return items.filter(r => [...r.children].some(x => x.offsetHeight > k.px * 1.3 * 2.4)).length > 1; };
+  const bigger = (k, cur, ratio) => !!k.px && (!cur.px || !(k.cols === 2 && k.wrap && cur.px >= 18 && squeezed(k)))
+    && (!cur.px || k.px > cur.px * ratio || (cur.px < WRAP_BELOW && k.px >= cur.px + 2));
+  const pick = wrap => {
+    const one = { cols: 1, px: best(1, wrap), wrap }, two = { cols: 2, px: W >= 600 && one.px * 1.2 < MAX ? best(2, wrap) : 0, wrap };
+    return { pick: bigger(two, one, 1.2) ? two : one, one: one.px };
+  };
+  const p0 = pick(false), plain = p0.pick;
+  let c = plain;
+  if (p0.one < WRAP_BELOW) {   // small with every item on one line in one column: try letting long lines wrap
+    const w = pick(true).pick; if (bigger(w, c, 1.15)) c = w;
+    const save = allowWrapped; allowWrapped = Infinity;
+    const one = { cols: 1, px: best(1, true), wrap: true }, two = { cols: 2, px: W >= 600 && one.px < MAX ? best(2, true) : 0, wrap: true };
+    const f = two.px > one.px ? two : one;
+    if (bigger(f, c, 1.2)) { c = f; anyWrap = true; } else allowWrapped = save;
+  }
+  if (!c.px) { set(1, MIN, true, PAD); remember(1, MIN, true, PAD, true); return enableScroll(); }
+  const px = c.px;
+  let lo = PAD, hi = PAD_MAX;
+  if (fits(c.cols, px, c.wrap, hi)) lo = hi;
+  else while (hi - lo > 0.05) { const mid = (lo + hi) / 2; fits(c.cols, px, c.wrap, mid) ? lo = mid : hi = mid; }
+  set(c.cols, px, c.wrap, lo);
+  remember(c.cols, px, c.wrap, lo, false);
+}
+
+// Top-bar labels: shrink until each word fits the tile (three lines at most); drop "(...)" if still too long.
+let measureCtx = null;
+function wordsFit(sp, px, max) {
+  measureCtx = measureCtx || document.createElement('canvas').getContext('2d');
+  const cs = getComputedStyle(sp);
+  measureCtx.font = `${cs.fontWeight} ${px}px ${cs.fontFamily}`;
+  return sp.textContent.split(/[ \t\n]+/).every(w => measureCtx.measureText(w).width <= max + 0.5);   // no-break spaces/hyphens keep their words together
+}
+function layoutBar() {
+  document.querySelectorAll('.next-tile span').forEach(sp => {
+    const b = sp.parentElement, cs = getComputedStyle(b);
+    const max = b.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const start = Math.round(parseFloat(cs.fontSize)) || 20;
+    const minPx = innerWidth <= 360 ? 10 : 12;
+    sp.style.overflowWrap = '';
+    const tryFit = () => { for (let px = start; px >= minPx; px--) { sp.style.fontSize = px + 'px'; if (sp.scrollHeight <= sp.clientHeight + 1 && wordsFit(sp, px, max)) return true; } return false; };
+    if (!tryFit() && sp.dataset.full && /\(/.test(sp.dataset.full)) { sp.innerHTML = tileLabel(sp.dataset.full.replace(/\s*\([^)]*\)/g, '')); tryFit(); }
+    if (!wordsFit(sp, minPx, max) && sp.dataset.full) { sp.textContent = sp.dataset.full; if (!tryFit()) sp.style.overflowWrap = 'anywhere'; }
+  });
+}
+
+// Emergency scan reminder: in the empty part of the top bar when there is room (emergency checklists have no
+// Previous/Next tiles), otherwise exactly over the checklist title, which it hides while it shows.
+const SCAN_TEXT = 'SCAN\u00a0· HEADING\u00a0· AIRSPEED\u00a0· ALTITUDE\u00a0· TRAFFIC', SCAN_SHORT = 'SCAN\u00a0· HDG\u00a0· AIRSPEED\u00a0· ALT\u00a0· TRAFFIC';
+function placeScan() {
+  const sc = $app.querySelector('.scan'); if (!sc) return;
+  const bar = $app.querySelector('.bar'), sp = bar && bar.querySelector('.spacer'), title = $app.querySelector('.list-title');
+  let r = null, inBar = false;
+  if (sp && getComputedStyle(sp).display !== 'none') {   // the free space between the left and right tiles
+    const split = sp.getBoundingClientRect().left, br = bar.getBoundingClientRect(), cs = getComputedStyle(bar);
+    let left = br.left + parseFloat(cs.paddingLeft), right = br.right - parseFloat(cs.paddingRight), top = 0, h = 0;
+    [...bar.children].forEach(k => {
+      if (k === sp || !k.offsetWidth) return;
+      const kr = k.getBoundingClientRect(); top = kr.top; h = kr.height;
+      if (kr.right <= split + 1) left = Math.max(left, kr.right + 12); else right = Math.min(right, kr.left - 12);
+    });
+    if (right - left >= 230 && h) { r = { left, top, width: right - left, height: h }; inBar = true; }
+  }
+  if (r) { /* placed in the bar */ }
+  else if (title) { const t = title.getBoundingClientRect(); r = { left: t.left + 8, top: t.top + 2, width: t.width - 16, height: Math.max(t.height - 2, 30) }; }
+  else return;
+  sc.classList.toggle('intitle', !inBar);
+  sc.style.whiteSpace = !inBar && r.height < 50 ? 'nowrap' : 'normal';
+  sc.textContent = !inBar && r.width < 560 ? SCAN_SHORT : SCAN_TEXT;
+  sc.style.left = Math.round(r.left) + 'px'; sc.style.top = Math.round(r.top) + 'px';
+  sc.style.width = Math.round(r.width) + 'px'; sc.style.height = Math.round(r.height) + 'px';
+  for (let px = 28; px >= 11; px--) {   // biggest text that fits the box (two lines allowed in the bar)
+    sc.style.fontSize = px + 'px';
+    if (sc.scrollHeight <= sc.clientHeight + 1 && sc.scrollWidth <= sc.clientWidth + 1) break;
+  }
+}
+function layout() { layoutBar(); layoutTiles(); layoutList(); placeScan(); fitFields(); }
+let rt, lastSize = innerWidth + 'x' + innerHeight;
+addEventListener('resize', () => {
+  clearTimeout(rt);
+  rt = setTimeout(() => {
+    const sz = innerWidth + 'x' + innerHeight; if (sz === lastSize) return;
+    lastSize = sz; layout();
+    if (pad) renderPad();
+  }, 120);
+});
+
+/* ---------- Edit screens ---------- */
+function renderManage() {
+  draft = null;
+  const broken = l => parse(l.text).some(b => b.type === 'choice' && !findByTitle(b.target));
+  const rows = lists.map((l, i) => `
+    <div class="edit-row">
+      <span class="swatch" style="background:${esc(l.color)}"></span>
+      <span class="name">${esc(l.title)}${broken(l) ? ' <span class="warn">⚠ broken button</span>' : ''}${l.group ? `<small>${esc(cleanGroup(l.group).replace(/\//g, ' › '))}${meta(l).hidden ? ' · hidden' : ''}</small>` : ''}</span>
+      <button class="icon-btn" data-act="up" data-id="${l.id}" ${i === 0 ? 'disabled' : ''} aria-label="Move ${esc(l.title)} up">▲</button>
+      <button class="icon-btn" data-act="down" data-id="${l.id}" ${i === lists.length - 1 ? 'disabled' : ''} aria-label="Move ${esc(l.title)} down">▼</button>
+      <button class="small-btn" data-go="#/edit/${l.id}">Edit</button>
+    </div>`).join('');
+  $app.innerHTML = `<div class="wrap">
+    <div class="home-head">
+      ${homeTile('Done')}
+      <h1>Edit Checklists</h1>
+    </div>
+    ${!isPristine(lists) && updateWaiting() ? `<div class="note">Updated DA40 checklists are available. Your edited checklists were kept. To get the update, export a backup, then tap <b>Restore DA40 defaults</b> at the bottom.</div>` : ''}
+    <div class="actions"><button class="small-btn grow" data-act="new">+ New checklist</button></div>
+    ${rows}
+    <div class="actions" style="margin-top:28px">
+      <button class="small-btn" data-act="export">Export backup</button>
+      <button class="small-btn" data-act="import">Import backup</button>
+      <button class="small-btn danger" data-act="samples">Restore DA40 defaults</button>
+    </div>
+    <div class="about" id="about">App v${APP_VERSION} · checklists v${read(VER_KEY, DEFAULTS_VERSION)}${isPristine(lists) ? '' : ' (edited)'}${updateWaiting() ? ' · v' + DEFAULTS_VERSION + ' available' : ''} · <span id="offline">checking offline copy…</span></div>
+  </div>`;
+  if ('caches' in window) Promise.all(OFFLINE_FILES.map(f => caches.match(f, { ignoreSearch: true }))).then(hits => {
+    const el = document.getElementById('offline');
+    if (el) el.textContent = hits.every(Boolean) ? 'offline ready' : 'offline copy incomplete — open once with internet';
+  }).catch(() => {});
+}
+
+// the files the app needs in airplane mode (sw.js caches them)
+const OFFLINE_FILES = ['./', 'index.html', 'aircraft.js', 'defaults.js', 'perf.js', 'charts.js'].concat(AIRCRAFT.chartFlow.filter(c => typeof POH_CHARTS !== 'undefined' && POH_CHARTS[c] && POH_CHARTS[c].panels).map(c => 'charts/' + c + '.jpg'));   // keep in step with sw.js
+let draft = null;
+function renderEditor(id) {
+  if (!draft || draft.id !== id) {
+    const l = id === 'new' ? { id: 'new', title: '', color: COLORS[lists.length % COLORS.length], text: '' } : find(id);
+    if (!l) return go('#/edit');
+    draft = { ...l, origTitle: l.title };
+  }
+  $app.innerHTML = `<div class="wrap">
+    <div class="home-head"><h1>${id === 'new' ? 'New Checklist' : 'Edit Checklist'}</h1></div>
+    <label class="f" for="t">Title</label>
+    <input type="text" id="t" value="${esc(draft.title)}" placeholder="e.g. Before Takeoff" autocorrect="off">
+    <label class="f" for="g">Group <span style="font-weight:400;color:var(--muted)">(checklists in the same group share one tile; use / for a sub-group, e.g. Emergency/Electrical; blank = its own tile)</span></label>
+    <input type="text" id="g" list="groups" value="${esc(draft.group || '')}" placeholder="e.g. Emergency" autocorrect="off">
+    <datalist id="groups">${[...new Set(lists.map(l => l.group).filter(Boolean))].map(g => `<option value="${esc(g)}">`).join('')}</datalist>
+    <label class="f">Tile color</label>
+    <div class="colors">${COLORS.map(c => `<button data-act="color" data-c="${c}" style="background:${c}" class="${c === draft.color ? 'sel' : ''}" aria-label="${COLOR_NAMES[c]}${c === draft.color ? ' (selected)' : ''}"></button>`).join('')}</div>
+    <label class="f" for="x">Items (one per line)</label>
+    <textarea id="x" spellcheck="false" autocorrect="off" autocapitalize="sentences" placeholder="Fuel selector ... BOTH">${esc(draft.text)}</textarea>
+    <div class="help">
+      <code>Fuel selector ... BOTH</code> item with a response (3+ dots between)<br>
+      <code>Seat belts</code> line with no response (wraps if long)<br>
+      <code>* HOBBS/TACH Times ... {times.out}</code> highlighted line · <code>^ U — Gear ... DOWN</code> pulsing line<br>
+      <code># Engine</code> section heading · <code>! Caution text</code> caution note · <code>| A | B | C</code> table row (first = header)<br>
+      <code>{dep.sum}</code> shows flight data (also {arr.sum}, {dep.hw}, {dep.comp}, {tora}, {tob.todist}, {times.out}); tap the line to enter it<br>
+      <code>-> FEATHER | Feathering procedure : Feathering Procedure</code> big button (label | subtitle : title of the checklist, or name of the group, to open)<br>
+      <code>@HIDDEN</code> no tile, not in Next/Previous · <code>@BRANCH</code> tile, not in Next/Previous · <code>@SUBTITLE text | small text</code> extra line under the title · <code>@EMERGENCY name</code> where the EMERGENCY button goes (an emergency checklist or group) · <code>@ATIS DEP</code> show the departure wind line
+    </div>
+    <div class="actions">
+      <button class="small-btn grow" data-act="cancel">Cancel</button>
+      <button class="home-tile grow" style="min-height:60px;font-size:22px" data-act="save">Save</button>
+    </div>
+    ${id !== 'new' ? `<div class="actions"><button class="small-btn danger" data-act="delete">Delete this checklist</button></div>` : ''}
+  </div>`;
+}
+const linkingTo = title => lists.filter(l => parse(l.text).some(b => b.type === 'choice' && normTitle(b.target) === normTitle(title)));
+
+/* ---------- Routing ---------- */
+function go(hash) { if (location.hash === hash) route(); else location.hash = hash; }
+// Re-render the current screen in place (after a keypad closes), keeping the scroll position.
+function rerender() { const y = window.pageYOffset; route(true); window.scrollTo(0, y); }
+let lastHash = null, planY = 0, planAt = null;   // planY: where Planning was scrolled to when a chart was opened from it
+function route(keepScroll) {
+  const fromHash = lastHash || '';
+  if (location.hash !== lastHash) { lastHash = location.hash; Object.keys(layoutKeep).forEach(k => delete layoutKeep[k]); }
+  const p = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+  const isChart = h => /^#\/plan\/chart\//.test(h), isPlan = h => /^#\/plan\/?$/.test(h);
+  const goEl = h => Array.prototype.find.call($app.querySelectorAll('[data-go]'), e => e.getAttribute('data-go') === h);
+  if (isPlan(fromHash) && isChart(location.hash)) { planY = window.pageYOffset; const b = goEl(location.hash); planAt = b ? { go: location.hash, top: b.getBoundingClientRect().top } : null; }
+  const backToPlan = isChart(fromHash) && isPlan(location.hash);
+  if (p[0] !== 'edit') draft = null;
+  if (p[0] !== 'data' && p[0] !== 'plan') dataReturn = location.hash || '#/';
+  let gpath = '';
+  try { gpath = decodeURIComponent(p.slice(1).join('/')); } catch (e) { gpath = ''; }
+  planRefresh();
+  if (p[0] === 'list') renderList(p[1]);
+  else if (p[0] === 'data') renderData();
+  else if (p[0] === 'plan') { if (p[1] === 'chart') renderPlanChart(p[2]); else renderPlan(); }
+  else if (p[0] === 'g') renderGroup(gpath);
+  else if (p[0] === 'edit') p[1] ? renderEditor(p[1]) : renderManage();
+  else renderHome();
+  setWake(p[0] !== 'edit');
+  if (!keepScroll) { const b = backToPlan && planAt ? goEl(planAt.go) : null; window.scrollTo(0, b ? window.pageYOffset + b.getBoundingClientRect().top - Math.max(0, Math.min(planAt.top, innerHeight - 160)) : backToPlan ? planY : 0); }   // the button stays on screen after a rotation
+  document.body.style.overflow = p[0] === 'edit' || p[0] === 'data' || p[0] === 'plan' ? '' : 'hidden';
+  reloadIfSafe();
+}
+addEventListener('hashchange', () => route());
+
+/* ---------- Events ---------- */
+$app.addEventListener('click', e => {
+  const row = e.target.closest('.row.tap');
+  if (row) return openRowEditor(row);
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.go) return go(t.dataset.go);
+
+  const id = t.dataset.id, i = lists.findIndex(l => l.id === id);
+  switch (t.dataset.act) {
+    case 'theme':
+      theme = { day: 'night', night: 'red', red: 'day' }[theme]; write(THEME_KEY, theme); applyTheme(); renderHome(); break;
+    case 'up': case 'down': {
+      const j = t.dataset.act === 'up' ? i - 1 : i + 1;
+      if (i < 0 || j < 0 || j >= lists.length) break;
+      [lists[i], lists[j]] = [lists[j], lists[i]]; saveLists(); renderManage(); break;
+    }
+    case 'new': go('#/edit/new'); break;
+    case 'color':
+      if (!draft) break;
+      draft.color = t.dataset.c;
+      $app.querySelectorAll('.colors button').forEach(b => { b.classList.toggle('sel', b === t); b.setAttribute('aria-label', COLOR_NAMES[b.dataset.c] + (b === t ? ' (selected)' : '')); }); break;
+    case 'cancel': draft = null; go('#/edit'); break;
+    case 'save': {
+      if (!draft) break;
+      draft.title = document.getElementById('t').value.trim() || 'Untitled';
+      draft.text = document.getElementById('x').value;
+      draft.group = cleanGroup(document.getElementById('g').value);
+      const orig = draft.origTitle, rec = { id: draft.id, title: draft.title, group: draft.group, color: draft.color, text: draft.text };
+      if (draft.id === 'new') lists.push({ ...rec, id: uid() });
+      else {
+        const k = lists.findIndex(l => l.id === draft.id);
+        if (k < 0) lists.push({ ...rec, id: uid() }); else lists[k] = rec;
+        // a renamed checklist: point every "->" button that opened it at the new title
+        if (orig && normTitle(orig) !== normTitle(rec.title)) lists.forEach(l => {
+          if (l.id === rec.id) return;
+          l.text = String(l.text).split('\n').map(line => {
+            const m = line.match(/^(\s*->[^:]*:\s*)(.+?)\s*$/);
+            return m && normTitle(m[2]) === normTitle(orig) ? m[1] + rec.title : line;
+          }).join('\n');
+        });
+      }
+      saveLists(); draft = null; go('#/edit'); break;
+    }
+    case 'delete': {
+      if (!draft) break;
+      const links = linkingTo(draft.title).filter(l => l.id !== draft.id).map(l => l.title);
+      if (confirm(`Delete "${draft.title}"? This cannot be undone.${links.length ? '\n\nThese checklists have buttons that open it: ' + links.join(', ') : ''}`)) {
+        lists = lists.filter(l => l.id !== draft.id);
+        saveLists(); draft = null; go('#/edit');
+      }
+      break;
+    }
+    case 'samples':
+      if (confirm('Replace ALL your checklists with the original DA40 (N523LT) set? Export a backup first if you want to keep your edits.')) {
+        applyDefaults(); renderManage();
+      }
+      break;
+    case 'export': exportBackup(); break;
+    case 'copybk': {
+      const ta = document.getElementById('bk'); if (!ta) break;
+      const done = () => { t.textContent = 'Copied ✓'; };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(done, () => { ta.select(); document.execCommand('copy'); done(); });
+      else { ta.select(); document.execCommand('copy'); done(); }
+      break;
+    }
+    case 'padall': case 'padfrom': {
+      const keys = t.dataset.tab === 'tob' ? TOB_SHOWN.map(f => f.k) : ATIS_KEYS[t.dataset.tab];
+      openPad(keys, t.dataset.act === 'padfrom' ? +t.dataset.i : 0, null, t.dataset.tab === 'tob' ? '' : 'ATIS'); break;
+    }
+    case 'copydep':   // pattern work: arrival ATIS = departure (a blank temperature / altimeter already means "departure")
+      ['wdir', 'wspd', 'gust', 'rwy', 'wref', '_t', 'src', 'srcT'].forEach(f => { if (fd['dep.' + f] !== undefined) fd['arr.' + f] = fd['dep.' + f]; else delete fd['arr.' + f]; });
+      ['plan.aoat', 'plan.aalt'].forEach(k => delete fd[k]);
+      if (lenOk()) fd['plan.ldglen'] = fd['tob.len']; else delete fd['plan.ldglen'];
+      fd._t = Date.now(); saveFd(); rerender(); break;
+    case 'wakehint': write('wakehint.v1', true); renderHome(); break;
+    case 'planfrom': openPad([t.dataset.k], 0, null, 'METAR'); break;
+    case 'planall': openPad(t.dataset.set === 'wx' ? PLAN_KEYS.dep : t.dataset.set === 'arrwx' ? PLAN_KEYS.arr : PLAN_WB.map(x => x.k).concat(PLAN_FUEL.map(f => f.k)), 0, null, /wx$/.test(t.dataset.set) ? 'METAR' : ''); break;
+    case 'planset':
+      if (t.dataset.k === 'chartview') { chartView = t.dataset.v; write('chartview.v1', chartView); rerender(); break; }
+      fd[t.dataset.k] = t.dataset.v; saveFd(); rerender(); break;
+    case 'planempty': openPad(['cfg.ew', 'cfg.em']); break;
+    case 'planuse': delete fd[t.dataset.k]; saveFd(); rerender(); break;
+    case 'planreset': if (!EMPTY_DEFAULT) break; planCfg = Object.assign({}, planCfg, EMPTY_DEFAULT); write(PLAN_CFG_KEY, planCfg); rerender(); break;
+    case 'magvar': openPad(['cfg.magvar']); break;
+    case 'wref': if (isTrue(t.dataset.tab)) delete fd[t.dataset.tab + '.wref']; else fd[t.dataset.tab + '.wref'] = 'T'; fd._t = Date.now(); saveFd(); rerender(); break;
+    case 'wbclear': Object.keys(fd).forEach(k => { if (WB_KEEP.test(k)) delete fd[k]; }); fd._t = Date.now(); saveFd(); rerender(); break;
+    case 'newflight': {
+      // keeps this flight's Hobbs/tach start times, which are recorded before the wind and takeoff data
+      // and the weight & balance entries, which stay until cleared on Preflight Planning
+      const keep = wbOnly(fd), t0 = fd._t; timeFields('out').map(f => f.k).forEach(k => { if (fd[k] !== undefined) keep[k] = fd[k]; });
+      fd = keep; if (Object.keys(keep).length) fd._t = t0 || Date.now(); saveFd();
+      if (/^#\/data/.test(location.hash)) rerender(); else location.replace('#/data');
+      break;
+    }
+    case 'import': document.getElementById('importFile').click(); break;
+  }
+});
+function openRowEditor(row) { openPad(row.dataset.keys.split(' '), 0, null, 'ATIS'); }   // in the airplane: the ATIS
+$app.addEventListener('keydown', e => {   // tappable data rows also work with a keyboard
+  const row = e.target.closest && e.target.closest('.row.tap');
+  if (pad) return;
+  if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); openRowEditor(row); }
+});
+
+// Keep the draft in sync so a re-render (e.g. rotation) never loses typing.
+$app.addEventListener('input', e => {
+  if (!draft) return;
+  if (e.target.id === 't') draft.title = e.target.value;
+  if (e.target.id === 'x') draft.text = e.target.value;
+  if (e.target.id === 'g') draft.group = e.target.value;
+});
+
+async function exportBackup() {
+  const data = JSON.stringify({ app: 'checklists', version: 1, lists: lists.map(({ title, group, color, text }) => ({ title, group, color, text })) }, null, 2);
+  const name = `checklists-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const file = new File([data], name, { type: 'application/json' });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); return; }
+  } catch (e) { if (e.name === 'AbortError') return; }
+  // Home Screen apps on older iPadOS can't save a downloaded file: share it as text, or show it to copy.
+  const standalone = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if (standalone) {
+    try { if (navigator.share) { await navigator.share({ title: name, text: data }); return; } } catch (e) { if (e.name === 'AbortError') return; }
+    return showBackupText(data);
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function showBackupText(data) {
+  $app.innerHTML = `<div class="wrap">
+    <div class="home-head">${homeTile('Done')}<h1>Backup</h1></div>
+    <p>Copy this text and keep it somewhere safe (e.g. Notes or Files). To restore it, save it as a .json file and use Import backup.</p>
+    <textarea id="bk" readonly>${esc(data)}</textarea>
+    <div class="actions"><button class="small-btn" data-act="copybk">Copy</button><button class="small-btn" data-go="#/edit">Back to Edit</button></div>
+  </div>`;
+}
+const readText = f => typeof f.text === 'function' ? f.text() : new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsText(f); });
+document.getElementById('importFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  let txt;
+  try { txt = await readText(f); } catch (err) { alert('Could not read that file.'); return; }
+  try {
+    const d = JSON.parse(txt);
+    const arr = Array.isArray(d) ? d : d.lists;
+    if (!Array.isArray(arr) || !arr.length || !arr.every(x => x && typeof x.title === 'string' && typeof x.text === 'string')) throw new Error('bad');
+    if (!confirm(`Import ${arr.length} checklists? This replaces your current ones.`)) return;
+    lists = arr.map(x => ({ id: uid(), title: x.title, group: typeof x.group === 'string' ? x.group : '', color: COLORS.includes(x.color) ? x.color : COLORS[0], text: x.text }));
+    saveLists(); renderManage();
+  } catch (err) { alert('That file is not a valid checklist backup.'); }
+});
+document.addEventListener('touchstart', () => {}, { passive: true });   // lets iOS show :active press feedback
+
+/* ---------- Updates ---------- */
+// A new version takes over in the background; the page reloads only at a safe moment (home screen with
+// no keypad or edit open, or while the app is in the background), never in the middle of a task.
+let pendingReload = false;
+function reloadIfSafe() {
+  if (!pendingReload || pad || draft) return;
+  const h = location.hash;
+  if (h === '' || h === '#' || h === '#/') location.reload();
+}
+
+/* ---------- Start ---------- */
+applyTheme();
+route();
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});   // ask the browser not to evict saved data
+// Coming back to the app the next day: last flight's data is cleared, as on a fresh start (the W&B entries stay).
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !fd._t || Date.now() - fd._t <= STALE_MS) return;
+  fd = wbOnly(fd); if (Object.keys(fd).length) fd._t = Date.now(); saveFd();
+  if (!pad && !draft) rerender();
+});
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || pendingReload) return;
+    pendingReload = true; reloadIfSafe();
+  });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update().catch(() => {});
+      else if (pendingReload && !draft) location.reload();
+    });
+  }).catch(() => {});
+}
+</script>
+</body>
+</html>
