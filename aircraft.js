@@ -12,40 +12,45 @@ const AIRCRAFT = {
   // Chart Supplement prints it); magnetic variation 13° W (1980 epoch). Both stay editable in the app.
   home: { icao: 'KBDR', elevFt: 9, magVarW: 13, src: 'FAA NASR (AirNav), effective 29 Oct 2026' },
 
-  // N523LT's current signed weight & balance record.
-  emptyWeight: { lb: null, arm: null, date: null, src: null },
+  // N523LT's basic empty weight. Pilot (10 Nov 2026): use the ForeFlight profile figures, taken from the W&B record.
+  // ForeFlight shows the arm rounded to the inch; replace with the exact moment if the report gives one.
+  emptyWeight: { lb: 1819.28, arm: 99.0, date: null, src: 'ForeFlight profile, from the W&B record (pilot, 10 Nov 2026)' },
 
-  // Loading stations (AFM Section 6). Station list to be confirmed against the AFM loading sheet; add or remove
-  // rows to match it. limit = maximum load at that station (lb), if the AFM gives one.
+  // Loading stations, AFM 6.4.8 moment arms; extended baggage compartment (OÄM 40-163, pilot confirmed) limits AFM 2.7.
   stations: [
-    { k: 'plan.pilot', label: 'Pilot', arm: null, limit: null, src: null },
-    { k: 'plan.front', label: 'Front passenger', arm: null, limit: null, src: null },
-    { k: 'plan.rear', label: 'Rear passengers', arm: null, limit: null, src: null },
-    { k: 'plan.bag', label: 'Baggage', arm: null, limit: null, src: null }],
-  // Limits that apply to more than one station together, e.g. { keys: ['plan.bag', 'plan.bagx'], limit: 0, label: '...', src: '' }
-  combinedLimits: [],
+    { k: 'plan.pilot', label: 'Pilot', arm: 90.6, limit: null, src: 'AFM 6.4.8 front seats' },
+    { k: 'plan.front', label: 'Front passenger', arm: 90.6, limit: null, src: 'AFM 6.4.8 front seats' },
+    { k: 'plan.rear', label: 'Rear passengers', arm: 128.0, limit: null, src: 'AFM 6.4.8 rear seats' },
+    { k: 'plan.bagf', label: 'Baggage, forward part', arm: 153.1, limit: 100, src: 'AFM 6.4.8 / 2.7 extended baggage, forward' },
+    { k: 'plan.baga', label: 'Baggage, aft part', arm: 178.7, limit: 40, src: 'AFM 6.4.8 / 2.7 extended baggage, aft' }],
+  // AFM 2.7: extended baggage compartment, max. total load forward + aft 100 lb.
+  combinedLimits: [{ keys: ['plan.bagf', 'plan.baga'], limit: 100, label: 'Baggage forward + aft', src: 'AFM 2.7' }],
 
-  // Fuel (AFM Sections 2 and 6). taxiGal: the allowance used between ramp and takeoff weight (pilot's choice or AFM).
-  fuel: { usableGal: null, lbPerGal: null, arm: null, taxiGal: null, src: null },
+  // Fuel. Long-range tank (OÄM 40-071, pilot confirmed): 2 x 25.5 gal total less 2 x 0.5 unusable = 50.0 usable
+  // (AFM 2.14.2). Arm 103.5 in (AFM 6.4.8). 6.01 lb/gal (AFM 6.4.10 note). Taxi allowance 1.5 gal (pilot).
+  fuel: { usableGal: 50.0, lbPerGal: 6.01, arm: 103.5, taxiGal: 1.5, src: 'AFM 2.14.2, 6.4.8, 6.4.10; taxi allowance pilot' },
 
-  // Weight limits (AFM Section 2). mlw / mzfw stay null if the AFM has no such limit (the check is then skipped).
-  limits: { mtow: null, mlw: null, mzfw: null, src: null },
+  // Weight limits, AFM 2.7: MTOW 2,646 with MÄM 40-227 (pilot: assume carried out); max zero fuel 2,535.
+  // Max landing: 2,535 only with the modified MLG strut (MÄM 40-123/e or OÄM 40-283), else 2,407. The strut mod
+  // is unconfirmed (pilot to check), so the conservative 2,407 is used until then.
+  limits: { mtow: 2646, mlw: 2407, mzfw: 2535, src: 'AFM 2.7 (MÄM 40-227; original MLG strut assumed)' },
 
-  // CG envelope (AFM Section 2/6): the polygon corners as [cg in, weight lb], in order around the envelope.
-  envelope: null,
-  envelopeSrc: null,
+  // CG envelope, AFM 2.8.2 / 6.4.11: forward 94.5 in from 1,720 to 2,161 lb, linear to 97.6 in at 2,646 lb
+  // (MÄM 40-227); rearward 100.4 in with the long-range tank (102.0 applies only to the standard tank).
+  envelope: [[94.5, 1720], [94.5, 2161], [97.6, 2646], [100.4, 2646], [100.4, 1720]],
+  envelopeSrc: 'AFM 2.8.2 (MÄM 40-227, long-range tank)',
 
-  // Cruise fuel flow by power setting (AFM Section 5 cruise tables), e.g. { 55: x, 65: y, 75: z } in gph.
-  // The keys become the Cruise power buttons on Preflight Planning.
-  fuelFlow: {},
-  fuelFlowSrc: null,
-  defaultPower: null,
+  // Cruise fuel flow, AFM 5.3.2: the highest flow listed for each power (best power, 2,400 RPM), so the fuel
+  // plan errs toward more burn. Best economy at 2,400 RPM would be 7.5 / 8.5 / 9.5 gph.
+  fuelFlow: { 55: 8.7, 65: 9.8, 75: 11.0 },
+  fuelFlowSrc: 'AFM 5.3.2, best power 2,400 RPM',
+  defaultPower: 75,   // pilot, 10 Nov 2026
 
-  // Maximum demonstrated crosswind, knots (AFM Section 2/4). Crosswinds above it show as a caution.
-  xwDemoKt: null,
-  xwSrc: null,
+  // Maximum demonstrated crosswind, AFM 5.3.5.
+  xwDemoKt: 20,
+  xwSrc: 'AFM 5.3.5',
 
-  // Time meters recorded at Inside Cockpit and shutdown. TO CONFIRM: which meters N523LT has.
+  // Time meters recorded at Cabin Check and shutdown (pilot: tach and Hobbs, record both).
   meters: [
     { f: 'hobbs', tag: 'H', label: 'Hobbs' },
     { f: 'tach', tag: 'T', label: 'Tach' }],

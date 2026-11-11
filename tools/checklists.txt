@@ -1,0 +1,883 @@
+# N523LT checklist source. `node tools/build_defaults.js` turns this file into defaults.js.
+# Content rule (pilot, 10 Nov 2026): the Emergency Checklist Card (2026 11 10) is primary; the DA 40 AFM
+# (Doc. 6.01.01-E Rev 10) and the G1000/GFC 700 AFMS (190-00492-10 Rev 8) fill gaps. Each checklist's
+# @SUBTITLE names its source. Speeds by weight use the 2,535 lb values (pilot decision).
+# Format: "=== Title | Group" starts a checklist; every following line is checklist text until the next "===".
+# Lines starting with "#" are section headers inside a checklist, so comments live only above the first "===".
+
+=== Before Entering Aircraft | Preflight
+@EMERGENCY Emergency
+@SUBTITLE Card
+Fuel ... CHECK
+Oil (4–8 qt · IFR ≥ 6 · 15W50 or 20W50) ... CHECK
+Cover / chock / pitot / cowl / mooring ... REMOVED
+
+=== Cabin Check | Preflight
+@EMERGENCY Emergency
+@SUBTITLE Card
+MET, NAV, mass & CG ... COMPLETE
+Airplane documents ... SPARROW + CE
+Ignition key ... PULLED OUT
+Front canopy & rear door ... CLEAN / UNDAMAGED
+Gust lock ... REMOVE / STOW
+Fire extinguisher ... CHARGED / SECURE
+Headsets ... PLUGGED IN / NC ON
+Flight controls and trim ... FREE & CORRECT
+Baggage ... STOW / SECURE
+Check for loose items ... COMPLETE
+All electrical equipment ... OFF
+Circuit breakers ... SET IN
+Engine control levers ... MOVEMENT
+Throttle ... IDLE
+RPM lever ... HIGH RPM
+Mixture control lever ... LEAN
+BAT (battery) switch ... ON
+Charts & database ... CHECK CURRENT
+Fuel quantity ... CHECK ON EIS
+! Long-range tanks: an indicator reading 16 gal may hold up to 19 (3 gal ungauged). Measure with the fuel quantity measuring device; unmeasured, plan on 16 gal (AFMS 4A).
+* Tach & Hobbs ... {times.out}
+Lights & pitot ... ON / CHECK / OFF
+BAT (battery) switch ... OFF
+
+=== Left Gear & Left Wing | Preflight
+@EMERGENCY Emergency
+@SUBTITLE Card · walk-around 1 of 4
+# Left main landing gear
+Landing gear strut & wheel fairing ... CHECK
+Tire inflation pressure ... 2.5 BAR / 36 PSI
+Wear, tread depth, slip marks ... CHECK
+Tire, wheel, brake ... CHECK
+Brake line connection ... CHECK
+# Left wing
+Entire wing surface ... CHECK
+Step ... CHECK
+Air intake on lower surface ... CHECK
+Openings on lower surface (traces of fuel) ... CHECK
+Tank drain ... SUMP
+Stall warning ... CHECK
+Tank filler ... DUMP, CHECK LEVEL
+Tank air outlet in lower surface ... CHECK
+2 stall strips on wing ... CHECK
+Pitot probe ... CHECK
+Landing / taxi light ... CHECK
+Wing tip ... CHECK
+Position light, strobe light (ACL) ... CHECK
+Mooring ... CHECK
+Aileron and linkage ... CHECK
+Aileron hinges and safety pin ... CHECK
+Foreign objects in aileron paddle ... CHECK
+Flap and linkage ... CHECK
+Flap hinges and safety pin ... CHECK
+
+=== Left Fuselage & Empennage | Preflight
+@EMERGENCY Emergency
+@SUBTITLE Card · walk-around 2 of 4
+# Fuselage left side
+Canopy, left side ... CHECK
+Rear cabin door & window ... CHECK
+Fuselage skin ... CHECK
+Antennas ... CHECK
+External data plate / serial number / tail ... CHECK
+# Empennage
+Stabilizers and control surfaces ... CHECK
+Hinges ... CHECK
+Elevator trim tab ... CHECK LOCKING WIRE
+Rudder trim tab ... CHECK
+Mooring on fin ... CHECK
+Tail skid and lower fin ... CHECK
+
+=== Right Fuselage & Right Wing | Preflight
+@EMERGENCY Emergency
+@SUBTITLE Card · walk-around 3 of 4
+# Fuselage right side
+Fuselage skin ... CHECK
+Window ... CHECK
+Canopy ... CHECK
+# Right wing
+Flap and linkage ... CHECK
+Flap hinges and safety pin ... CHECK
+Aileron and linkage ... CHECK
+Aileron hinges and safety pin ... CHECK
+Foreign objects in aileron paddle ... CHECK
+Wing tip ... CHECK
+Position light, strobe light (ACL) ... CHECK
+Mooring ... CHECK
+Entire wing surface ... CHECK
+2 stall strips on wing ... CHECK
+Tank air outlet in lower surface ... CHECK
+Tank drain ... SUMP
+Gascolator ... SUMP
+Tank filler ... DUMP, CHECK LEVEL
+Step ... CHECK
+
+=== Right Gear, Nose & Underside | Preflight
+@EMERGENCY Emergency
+@SUBTITLE Card · walk-around 4 of 4
+# Right main landing gear
+Landing gear strut & fairing ... CHECK
+Tire inflation pressure ... 2.5 BAR / 36 PSI
+Wear, tread depth, slip marks ... CHECK
+Tire, wheel, brake ... CHECK
+Brake line connection ... CHECK
+# Front fuselage
+Oil ... CHECKED (BEFORE ENTERING)
+Cowling ... CHECK
+3 air intakes ... CHECK
+Prop & spinner (incl. screws) ... CHECK
+Nose landing gear ... CHECK
+Fairing, tire & wheel, wear, tread, slip marks ... CHECK
+Nose tire inflation pressure ... 2.0 BAR / 29 PSI
+Exhaust ... CHECK
+Forward cabin air inlets (if installed) ... CHECK
+Winter baffle for fresh-air inlet (if installed) ... CHECK
+# Underside
+Antennas ... CHECK
+Gascolator ... CONFIRM SUMPED
+Venting pipes ... CHECK
+Fuselage underside ... CHECK
+
+=== Before Starting Engine | Start & Taxi
+@EMERGENCY Engine Fire on Ground
+@SUBTITLE Card
+Preflight inspection ... COMPLETE
+Parking brake ... SET
+Rudder pedals ... ADJUSTED
+Safety harnesses ... ON / FASTENED
+Rear door ... CLOSED / LOCKED
+Front canopy ... POSITION 1 OR 2
+ELT ... ARMED
+Circuit breakers ... SET IN
+Flight controls ... FREE & CORRECT
+Trim wheel ... T/O
+Friction device, throttle quadrant ... ADJUSTED
+Throttle ... IDLE
+Mixture control lever ... LEAN
+RPM lever ... HIGH
+Alternate air ... CLOSED
+Alternate static valve ... CLOSED
+Avionics master switch ... OFF
+Essential Bus switch ... OFF
+BAT (battery) switch ... ON
+Fuel tank selector ... FULLEST
+
+=== Engine Start | Start & Taxi
+@EMERGENCY Engine Fire on Ground
+@SUBTITLE Card · starter limits from AFMS 4A
+Keys ... INSERTED
+Clear prop ... SHOUT!
+Strobe light (ACL) ... ON
+Electrical fuel pump ... ON, NOTE NOISE
+| Step | Cold | Warm | Flooded |
+| Throttle | 1.2 in | 1.2 in | MID |
+| Mixture RICH, then LEAN | 3–5 sec | 1–3 sec | 0 (LEAN) |
+| Throttle | 0.4 in | 1.2 in | MID |
+Ignition switch ... START
+! Flooded: pull the throttle back toward idle as the engine starts.
+Mixture control lever ... RAPIDLY RICH
+Throttle ... 1,000 RPM
+^ Oil pressure ... GREEN ARC WITHIN 15 SEC
+Electrical fuel pump ... OFF
+ALT (alternator) switch ... ON
+Ammeter ... CHECK
+Fuel pressure ... CHECK MSGS
+Annunciator on PFD ... CHECK
+Mixture ... LEAN FOR TAXI
+! Throttle positions are measured forward from IDLE (rear of slot). Starter: 10 sec maximum, then 20 sec cool; after 6 attempts let it cool 30 min (AFMS 4A).
+
+=== Before Taxi | Start & Taxi
+@EMERGENCY Engine Fire on Ground
+@SUBTITLE Card
+Avionics master switch ... ON
+Backup attitude ... CAGE
+Electrical equipment ... AS REQUIRED
+Flaps ... UP / T/O / LDG / UP
+Flight instruments and avionics ... SET
+Transponder ... SET
+Radios ... SET
+ATIS ... SET
+Wind & runway ... {dep.sum}
+Altimeters ... SET PER ATIS
+Heading & attitude bugs ... SET
+Flood light ... TEST
+Ammeter ... CHECK
+Fuel tank selector ... CHANGE
+! Confirm the engine also runs on the other tank: at least 1 min at 1,500 RPM (AFMS 4A).
+Pitot heating ... TEST, AS REQ.
+Position, landing, taxi, strobe lights ... TEST, AS REQ.
+Idle RPM ... 600–800 RPM
+Primary Flight Display (PFD) ... CHECK ANNUNC.
+Autopilot ... ON / MANUAL / OFF
+Trim ... T/O
+Flight plan ... ENTERED
+
+=== Taxi | Start & Taxi
+@EMERGENCY Engine Fire on Ground
+@SUBTITLE Card
+Parking brake ... RELEASE
+Taxiway ... CLEAR
+Brakes ... TEST
+Instruments / avionics ... CHECK CORRECT
+Wind (head / cross) ... {dep.hw}
+Ailerons ... HW: INTO · TW: DOWN & AWAY
+
+=== Run-Up | Start & Taxi
+@EMERGENCY Engine Fire on Ground
+@SUBTITLE Card · run-up into the wind
+Parking brake ... SET
+Safety harnesses ... ON / FASTENED
+Rear door; front canopy ... CLOSED / LOCKED
+Door warning light ... CHECK
+Fuel tank selector ... FULLEST TANK
+Engine instruments ... IN GREEN SECTOR
+Circuit breakers ... PRESSED IN
+Fuel pressure ... CHECK / NO MSGS
+Flaps ... SET T/O
+Trim ... CHECK T/O
+Flight controls ... FREE & CORRECT
+Throttle ... 2,000 RPM
+Mixture control lever ... BEST POWER
+Mag check (L – BOTH – R – BOTH) ... ≤ 175 DROP · ≤ 50 DIFF
+RPM lever ... CYCLE 3×
+Engine & electronics ... CHECK ENGINE PAGE
+Throttle ... IDLE, THEN 1,000
+Alternate air ... CHECK CLOSED
+Landing light ... ON AS REQUIRED
+Pitot heating ... AS REQUIRED
+Parking brake ... RELEASE
+
+=== Takeoff Briefing | Start & Taxi
+@EMERGENCY Power Loss Below 1,000' AGL
+@SUBTITLE Card · before calling the tower
+@ATIS DEP
+Runway & wind ... {dep.sum}
+Wind (head / cross) ... {dep.hw}
+Runway available ... {tora}
+Required: takeoff over 50 ft ... {tob.todist}
+Issues before rotation ... ABORT
+Rotate / climb ... 59 / 66 KIAS
+Pattern altitude is ______ ft.
+# Engine failure or fire
+Runway left is sufficient ... LAND ON IT
+Runway insufficient ... STRAIGHT AHEAD (or ______)
+At or above pattern altitude ... RETURN, LAND INTO WIND
+I will fly; you ask for help.
+
+=== Takeoff | Flight
+@EMERGENCY Power Loss Below 1,000' AGL
+@SUBTITLE Card · normal take-off procedure
+@ATIS DEP
+Fuel pump ... ON
+Landing light ... ON
+Transponder ... ON / ALT
+Flaps ... CHECK T/O
+RPM lever ... HIGH
+Mixture control lever ... RICH (< 5,000 FT)
+Throttle ... MAX POWER
+Elevator ... NEUTRAL
+Rudder ... MAINTAIN CENTERLINE
+Nose wheel lift-off ... 59 KIAS
+Airspeed ... BEST RATE ~66 KIAS
+Positive rate ... FLAPS UP
+# Above a safe height
+RPM lever ... 2,400 RPM
+Electrical fuel pump ... OFF
+Landing light ... OFF
+-> SHORT / SOFT FIELD | short or soft field takeoff : Short / Soft Field Takeoff
+
+=== Short / Soft Field Takeoff | Flight
+@BRANCH
+@EMERGENCY Power Loss Below 1,000' AGL
+@SUBTITLE Card
+@ATIS DEP
+Brakes ... APPLY
+Flaps ... T/O
+Throttle ... MAX
+Elevator ... FULLY AFT
+Brakes ... RELEASE
+Hold direction ... RUDDER
+Elevator ... RELEASE SLOWLY, BUILD SPEED LOW LEVEL
+| Weight | Airspeed |
+| 2,646 lb | 67 KIAS |
+| 2,535 lb | 66 KIAS |
+| 2,205 lb | 60 KIAS |
+| 1,874 lb | 54 KIAS |
+# Above a safe height
+RPM lever ... 2,400 RPM
+Electrical fuel pump ... OFF
+Landing light ... OFF
+-> BACK TO TAKEOFF | normal takeoff : Takeoff
+
+=== Climb | Flight
+@EMERGENCY Power Loss in Flight
+@SUBTITLE Card
+| Weight | Best rate | Cruise climb |
+| 2,646 lb | 67 KIAS | 76 KIAS |
+| 2,535 lb | 66 KIAS | 73 KIAS |
+| 2,205 lb | 60 KIAS | 68 KIAS |
+| 1,874 lb | 54 KIAS | 60 KIAS |
+Engine instruments ... IN GREEN
+Trim ... AS REQUIRED
+Fuel pump ... ON AT HIGH ALT.
+
+=== Cruise | Flight
+@EMERGENCY Power Loss in Flight
+@SUBTITLE Card
+Flaps ... UP
+Throttle & RPM ... SEE TABLE
+Mixture ... LEANED
+Trim ... AS REQUIRED
+Fuel tank selector ... AS REQUIRED
+! Long-range tanks: maximum difference between tanks 8 gal (AFM 2.14.2).
+Electrical fuel pump ... ON AT HIGH ALT.
+-> POWER TABLE | AFM 5.3.2 : Cruise Power Settings
+
+=== Cruise Power Settings | Flight
+@HIDDEN
+@EMERGENCY Power Loss in Flight
+@SUBTITLE AFM 5.3.2 · manifold pressure, inHg
+| Press. alt | ISA °C | 55% 2200 | 55% 2400 | 65% 2200 | 65% 2400 | 75% 2200 | 75% 2400 |
+| GPH econ / power | | 7.2 / 8.5 | 7.5 / 8.7 | 8.2 / 9.5 | 8.5 / 9.8 | 9.2 / 10.7 | 9.5 / 11.0 |
+| SL | 15 | 22.4 | 21.2 | 24.9 | 23.4 | 27.3 | 25.8 |
+| 1,000 | 13 | 22.2 | 21.0 | 24.5 | 23.2 | 26.8 | 25.5 |
+| 2,000 | 11 | 21.9 | 20.7 | 24.2 | 22.9 | 26.5 | 25.2 |
+| 3,000 | 9 | 21.6 | 20.4 | 23.8 | 22.6 | 26.1 | 24.8 |
+| 4,000 | 7 | 21.2 | 20.1 | 23.5 | 22.3 | — | 24.5 |
+| 5,000 | 5 | 20.9 | 19.8 | 23.1 | 22.0 | — | 24.1 |
+| 6,000 | 3 | 20.6 | 19.5 | 22.8 | 21.7 | — | — |
+| 7,000 | 1 | 20.3 | 19.3 | 22.4 | 21.4 | — | — |
+| 8,000 | −1 | 20.0 | 19.0 | — | 21.0 | — | — |
+| 9,000 | −3 | 19.7 | 18.7 | — | 20.7 | — | — |
+| 10,000 | −5 | 19.4 | 18.4 | — | — | — | — |
+| 11,000 | −7 | 19.1 | 18.1 | — | — | — | — |
+| 12,000 | −9 | — | 17.8 | — | — | — | — |
+| 13,000 | −11 | — | 17.6 | — | — | — | — |
+! — = not available at that altitude. At ISA +15 °C the power falls by about 3 % of the selected power; at ISA −15 °C it rises by about 3 % (AFM 5.3.2).
+-> BACK TO CRUISE | cruise checklist : Cruise
+
+=== Descent | Flight
+@EMERGENCY Power Loss in Flight
+@SUBTITLE Card
+@ATIS ARR
+Arrival wind & runway ... {arr.sum}
+Mixture, throttle, RPM ... ADJUST AS REQUIRED
+
+=== Landing Approach | Flight
+@EMERGENCY Power Loss Below 1,000' AGL
+@SUBTITLE Card
+@ATIS ARR
+Electrical fuel pump ... ON
+Fuel selector ... FULLEST TANK
+Safety harnesses ... FASTENED
+Airspeed ... REDUCE (FLAPS!)
+Flaps ... T/O
+Trim ... AS REQUIRED
+Landing light ... ON
+# Before landing
+Mixture control lever ... RICH
+RPM lever ... HIGH
+Flaps ... LDG
+Airspeed ... NORMAL 71 KIAS
+Short / soft field ... 64 KIAS (SOFT: NOSE OFF WITH POWER)
+-> GO-AROUND | if needed : Go-Around
+
+=== Go-Around | Flight
+@BRANCH
+@EMERGENCY Power Loss Below 1,000' AGL
+@SUBTITLE Card
+@ATIS ARR
+Throttle ... MAX PWR
+Airspeed ... BEST RATE
+Flaps ... T/O
+Positive rate ... FLAPS UP
+# Above a safe height
+RPM lever ... 2,400 RPM
+Airspeed ... CRUISE CLIMB
+Electrical fuel pump ... OFF
+
+=== V-Speeds & Limits | Flight
+@BRANCH
+@EMERGENCY Emergency
+@SUBTITLE Card · weights from the W&B record
+| Speed | KIAS | | Limit | |
+| Vr | 59 | | Max RPM / continuous | 2,700 / 2,400 |
+| Vx | not published | | Oil pressure | 55–95 PSI |
+| Vy takeoff / clean | 66 / 73 | | Oil temp max | 118 °C |
+| Best glide | 73 | | CHT max | 260 °C |
+| Vfe T/O / LDG | 108 / 91 | | Fuel pressure | 14–35 PSI |
+| Vso / Vs1 | 49 / 52 | | Crosswind demonstrated | 20 KT |
+| Va | 111 | | Ceiling | 14,000 FT |
+| Vno | 128 | | Basic empty weight | 1,819 LB |
+| Vne (red line) | 178 | | Max takeoff | 2,646 LB |
+| White arc | 49–91 | | Max zero fuel | 2,535 LB |
+| Green arc | 52–129 | | Max landing | 2,407 LB (strut mod?) |
+| Yellow arc | 129–178 | | Useful load | 826 LB |
+! Engine: Lycoming IO-360-M1A, 4-cylinder, 180 HP max / 160 HP continuous. Max landing weight is 2,535 LB only with the MLG strut mod (MÄM 40-123/e or OÄM 40-283); 2,407 LB until confirmed (AFM 2.7).
+
+=== After Landing | After Landing
+@EMERGENCY Engine Fire on Ground
+@SUBTITLE Card
+Brakes ... AS REQUIRED
+Electrical fuel pump ... OFF
+Transponder ... OFF / STBY
+Pitot heating ... OFF
+Lights ... AS REQUIRED
+Flaps ... UP
+
+=== Engine Shutdown & Post Flight | After Landing
+@EMERGENCY Engine Fire on Ground
+@SUBTITLE Card
+Passenger rudders ... FULL AFT
+Flight plan ... CLOSE
+Engine instruments ... CHECK
+Avionics master & all electrical ... OFF
+Throttle ... 1,000 RPM
+Ignition check ... OFF – BOTH – CYCLE
+Mixture control lever ... LEAN
+Ignition switch ... OFF, REMOVE KEY
+Master switch (ALT/BAT) ... OFF
+* Tach & Hobbs ... {times.in}
+Airplane ... MOOR, COVER, STALL, COWL & PITOT
+
+=== Power Loss Below 1,000' AGL | Emergency
+@SUBTITLE Card
+* Airspeed ... 72 KIAS
+* Fuel selector ... OFF
+* Mixture ... LEAN
+* Flaps ... AS REQUIRED
+* Communicate ... MAYDAY
+* Battery & ignition ... OFF
+! Land straight ahead. Turning back can be fatal (AFM 3.2.2).
+
+=== Power Loss in Flight | Emergency
+@SUBTITLE Card
+* Pitch for best glide ... 73 KIAS
+Fuel selector ... SWITCH
+Fuel pump ... ON
+Note wind direction & velocity
+Pick landing site
+Alternate air ... OPEN
+Ignition ... BOTH
+Throttle ... OPEN
+Prop ... HIGH
+Mixture ... BEST POWER
+! If loss of oil pressure, land as soon as possible.
+! Prop stopped: dive to ~130 KIAS, allow 1,000 ft (AFM 3.2.6).
+-> NO RESTART | Forced landing : Forced Landing — No Restart
+
+=== Forced Landing — No Restart | Emergency
+@SUBTITLE Card · if no restart, and time permits
+* Best glide ... 73 KIAS
+Squawk ... 7700
+Declare emergency ... ACTIVE FREQ. OR 121.5
+Seatbelts / harnesses ... TIGHTEN
+Mixture ... LEAN
+Throttle ... IDLE
+Fuel selector ... OFF
+Flaps ... AS NEEDED
+Battery / alternator / ignition ... OFF
+Land tail low ... 71 KIAS
+# Glide ratio
+Windmilling prop ... 8.8 · 1.45 NM PER 1,000 FT
+Stopped prop ... 10.3 · 1.70 NM PER 1,000 FT
+
+=== Engine Fire on Ground | Emergency
+@SUBTITLE Card
+* Fuel selector ... OFF
+* Cabin heat ... OFF
+* Brakes ... APPLY
+# After standstill
+Throttle ... MAX POWER
+Master BAT / ALT ... OFF
+# When the engine has stopped
+Ignition switch ... OFF
+Canopy ... OPEN
+Airplane ... EVACUATE
+
+=== Electrical Fire with Smoke on Ground | Emergency
+@SUBTITLE Card
+* Master BAT / ALT ... OFF
+# If the engine is running
+Throttle ... IDLE
+Mixture ... LEAN
+# When the engine has stopped
+Ignition ... OFF
+Canopy ... OPEN
+Airplane ... EVACUATE
+
+=== Smoke and Fire During Takeoff | Emergency
+@SUBTITLE Card
+# If takeoff can still be aborted
+Throttle ... IDLE
+Cabin heat ... OFF
+Brakes ... APPLY
+After stopping ... GROUND FIRE CHECKLIST
+-> GROUND FIRE | Engine fire on ground : Engine Fire on Ground
+# If takeoff cannot be aborted
+Cabin heat ... OFF
+Emergency landing airspeed ... 72 KIAS
+# When landing is reachable
+Fuel tank selector ... OFF
+Fuel pump ... OFF
+Cabin heat ... OFF
+Master BAT / ALT ... OFF
+Emergency windows ... OPEN, AS REQ.
+Land with engine off ... CONSIDER FLAP POSITION
+! If smoke, the canopy can be opened in flight.
+
+=== Engine Fire in Flight | Emergency
+@SUBTITLE Card
+* Cabin heat ... OFF
+Select emergency landing field
+# When the landing field is reachable
+Fuel tank selector ... OFF
+Throttle ... MAX POWER
+Fuel pump ... OFF
+Master switch (ALT/BAT) ... ON
+Emergency windows ... OPEN, AS REQ.
+Land with engine off ... CONSIDER FLAP POSITION
+! If smoke, the canopy can be opened in flight.
+
+=== Electrical Fire with Smoke in Flight | Emergency
+@SUBTITLE Card · AFMS 3.3.3(b)
+* Horizon switch ... ON
+* Master (ALT/BAT) ... OFF
+* Cabin heat ... OFF
+BAT & ESS BUS ... ON
+Windows ... OPEN
+# If smoke or fumes persist: use standby instruments
+ALT ... ON
+ESS BUS ... OFF
+BATT & ESS TIE circuit breakers ... PULL
+! Land at the nearest suitable airport as soon as possible (AFMS 3.3.3(b)).
+
+=== Electrical System Failures | Emergency
+@SUBTITLE Card · AFMS 3.7.2(b)
+Circuit breakers ... IN
+Alternator ... OFF, THEN ON
+If nothing: Essential BUS ... ON
+Switch off non-essential loads
+* Land within ... 30 MINUTES
+If PFD attitude information lost ... HORIZON ON
+! Essential bus: PFD (composite), NAV/COM 1, GPS 1, AHRS, ADC, pitot heat, engine instruments, transponder, flood light, landing light. Battery: at least 30 min; emergency battery (HORIZON) 1 h 30 min with flood light on (AFMS 3.7.2(b)).
+
+=== Icing | Emergency
+@SUBTITLE Card
+Leave icing ... CHANGE ALTITUDE OR TURN BACK
+Pitot heating ... ON
+Cabin heat ... ON
+Air distributor ... UP
+RPM ... INCREASE
+Alternate air ... OPEN
+Emergency windows ... OPEN
+ATC ... ADVISE
+! Ice increases stalling speed. 2,700 RPM is permissible without time limit.
+# If pitot heating fails
+Alternate static valve ... OPEN
+Emergency windows ... CLOSED
+
+=== Engine Problems on the Ground | Emergency/Engine
+@SUBTITLE AFM 3.2.1
+Throttle ... IDLE
+Brakes ... AS REQUIRED
+Engine ... OFF IF NECESSARY; OTHERWISE FIND THE CAUSE
+! Oil pressure below the green sector: switch the engine off immediately. If the problem cannot be cleared, do not fly.
+
+=== Engine Problem on Takeoff Roll | Emergency/Engine
+@SUBTITLE AFM 3.2.2(a) · takeoff can still be aborted
+* Throttle ... IDLE
+* Brakes ... AS REQUIRED
+# If time remains (fire risk)
+Fuel tank selector ... OFF
+Mixture ... LEAN — ENGINE OFF
+Ignition switch ... OFF
+Master switch (ALT/BAT) ... OFF
+
+=== Engine Running Roughly | Emergency/Engine
+@SUBTITLE AFM 3.2.3(a)
+! A very rough engine can lead to loss of the propeller. Continue only if there is no alternative.
+Airspeed ... 73 KIAS
+Electrical fuel pump ... CHECK ON
+Fuel tank selector ... CHECK SELECTED TANK
+Engine instruments ... CHECK
+Throttle ... CHECK
+RPM lever ... CHECK
+Mixture ... SET FOR SMOOTH RUNNING
+Alternate air ... OPEN
+Ignition switch ... CHECK BOTH
+Throttle / RPM / mixture ... TRY VARIOUS SETTINGS
+! If it does not clear and the engine no longer gives enough power: emergency landing.
+
+=== Loss of Oil Pressure | Emergency/Engine
+@SUBTITLE AFM 3.2.3(b)
+Oil pressure warning & indicator ... CHECK
+Oil temperature ... CHECK
+# Pressure low, oil temperature normal, no warning
+Probably an indication fault ... MONITOR WARNING, OIL TEMP, CHT
+# Pressure low with oil temp or CHT rising, or warning on
+Engine power ... MINIMUM REQUIRED
+Land ... AS SOON AS POSSIBLE
+Be prepared ... ENGINE FAILURE
+# Pressure → 0 with vibration, oil loss, noise or smoke
+* Engine ... SHUT OFF
+* Emergency landing ... ENGINE OFF
+-> FORCED LANDING | Emergency landing : Forced Landing — No Restart
+
+=== Oil Pressure, Oil Temp & CHT High | Emergency/Engine
+@SUBTITLE AFM 3.2.3(c)–(e)
+# High oil pressure
+Oil temperature normal ... INDICATION FAULT — SERVICE
+# High oil temperature
+CHT and EGT ... CHECK
+Neither high ... INDICATION FAULT — SERVICE
+! A steady −3 °C or 158 °C oil temperature suggests a failed sensor.
+CHT or EGT also high, oil pressure low ... LOSS OF OIL PRESSURE
+CHT or EGT also high, oil pressure green ... ENRICH · REDUCE POWER
+No improvement ... LAND NEAREST AIRFIELD
+# High CHT (yellow or above)
+Mixture ... CHECK, ENRICH
+Oil temperature ... CHECK
+Oil temp also high, pressure low ... LOSS OF OIL PRESSURE
+Oil temp also high, pressure green ... REDUCE POWER
+No improvement ... LAND NEAREST AIRFIELD · PREPARE FOR EMERGENCY LANDING
+-> OIL PRESSURE | Loss of oil pressure : Loss of Oil Pressure
+
+=== High RPM / Loss of RPM | Emergency/Engine
+@SUBTITLE AFM 3.2.3(f)–(g)
+# High RPM (yellow or red)
+Throttle quadrant friction ... CHECK
+Oil pressure ... CHECK
+Oil pressure lost ... CONTROL RPM WITH THROTTLE · LOSS OF OIL PRESSURE
+Oil pressure normal: RPM lever ... PULL BACK, LISTEN
+Audible drop, indication unchanged ... INDICATION FAULT — SERVICE
+No audible drop ... GOVERNOR FAULT: CONTROL RPM WITH THROTTLE
+# Loss of RPM
+Electrical fuel pump ... CHECK ON
+Fuel tank selector ... CHECK
+Throttle quadrant friction ... CHECK TIGHT
+RPM lever ... HIGH RPM, LISTEN
+No audible rise ... GOVERNOR FAULT: RPM WITH THROTTLE · LAND NEAREST AIRFIELD
+Audible rise, indication unchanged ... INDICATION FAULT — SERVICE
+
+=== Fuel Flow & Fuel Pressure | Emergency/Engine
+@SUBTITLE AFMS 3.2.3(h) · AFM 3.2.3(i)
+# High fuel flow (red)
+Fuel pressure ... CHECK FOR RED FUEL PRESS LO
+FUEL PRESS LO shown ... POSSIBLE LEAK — LAND NEAREST AIRPORT
+No FUEL PRESS LO ... INDICATION FAULT; USE AFM 5.3.2 FUEL FLOWS
+# Low fuel pressure with fuel pump ON
+Fuel flow ... CHECK
+Fuel flow high ... POSSIBLE LEAK — LAND NEAREST SUITABLE AIRFIELD
+Fuel flow green, engine smooth ... INDICATION FAULT — SERVICE
+! Watch for power loss or rough running (fuel starvation). Not enough power: emergency landing.
+
+=== Defective Engine Controls | Emergency/Engine
+@SUBTITLE AFM 3.2.5
+# Mixture cable
+Maintain altitude to the nearest airfield.
+In the descent, test the engine at higher power; a lean mixture can cause roughness and power loss. Plan the approach for it.
+! Go-around may become impossible with the remaining power.
+Shut-down: parking brake SET · avionics OFF · electrical OFF · throttle IDLE · ignition OFF · master OFF
+# Throttle cable
+Enough power ... NEAREST AIRFIELD, POWER WITH RPM LEVER · LAND WITH ENGINE SHUT DOWN
+Not enough power ... EMERGENCY LANDING, ENGINE OFF
+# RPM lever cable
+Enough power ... NEAREST AIRFIELD, POWER WITH THROTTLE · NORMAL LANDING
+Not enough power ... EMERGENCY LANDING, ENGINE OFF
+
+=== Starter Malfunction | Emergency/Electrical & Avionics
+@SUBTITLE AFM 3.7.2(c) · START light stays on after start
+Throttle ... IDLE
+Mixture ... LEAN — ENGINE OFF
+Ignition switch ... OFF
+Master switch (ALT/BAT) ... OFF
+* Terminate flight preparation
+
+=== Overvoltage | Emergency/Electrical & Avionics
+@SUBTITLE AFM 3.7.2(d) · above 32 V
+Essential bus ... ON
+Master switch (ALT) ... OFF
+^ Master switch (BAT) ... LEAVE ON
+Equipment not needed (esp. pitot heat) ... OFF
+Land ... NEAREST APPROPRIATE AIRFIELD
+
+=== Low Voltage Caution | Emergency/Electrical & Avionics
+@SUBTITLE AFMS 4B.3 · LOW VOLTS below 24 V
+# On the ground
+Engine speed ... 1,200 RPM
+Electrical equipment ... OFF
+Ammeter and voltmeter ... CHECK
+Caution stays, ammeter flashes at zero ... DISCONTINUE FLIGHT
+# In flight
+Electrical equipment ... OFF IF NOT NEEDED
+Ammeter and voltmeter ... CHECK
+Caution stays, ammeter flashes at zero ... ALTERNATOR FAILURE
+-> ALTERNATOR | Electrical system failures : Electrical System Failures
+# During landing
+After landing ... AS ON THE GROUND
+
+=== Display Failure | Emergency/Electrical & Avionics
+@SUBTITLE AFMS 3.8.1 · PFD or MFD
+* DISPLAY BACKUP button (audio panel) ... PUSH — OUT
+# After automatic reversionary mode
+DISPLAY BACKUP ... PUSH — OUT
+One attempt to return: DISPLAY BACKUP ... PUSH — IN
+Still reversionary or flashing ... BACK TO OUT
+
+=== AHRS / ADC Failure | Emergency/Electrical & Avionics
+@SUBTITLE AFMS 3.8.2–3.8.3
+# AHRS failure (red X, AHRS FAILURE)
+Standby attitude, compass, nav map ... USE
+Course ... SET IN DIGITAL WINDOW
+# Air data computer failure (red X on speed / altitude)
+Standby airspeed and altimeter ... USE
+Land ... AS SOON AS PRACTICAL
+
+=== Engine Display or Annunciator Loss | Emergency/Electrical & Avionics
+@SUBTITLE AFMS 3.8.4–3.8.5
+# Engine or fuel display lost or wrong
+Power ... BY THROTTLE POSITION, NOISE, SPEED
+Other indications ... MONITOR ENGINE HEALTH
+Fuel flow ... USE AFM POWER SETTINGS
+ENGINE SYSTEM and AUX – TRIP PLANNING pages ... USE
+# Annunciators
+An annunciator appears ... TREAT AS REAL
+Display abnormal, no annunciator ... CROSS-CHECK; IF UNSURE, TREAT AS REAL
+
+=== Avionics Fan Fail or Overheat | Emergency/Electrical & Avionics
+@SUBTITLE AFMS 4B
+# PFD / MFD / GIA FAN FAIL
+On the ground ... NO NIGHT OR IMC TAKEOFF
+In flight ... MONITOR FOR OVERHEAT (GIA: MINIMIZE COM TX)
+# PFD OVERHEAT
+Cross-check PFD with standby instruments.
+PFD disagrees or fails ... DISPLAY BACKUP · PULL PFD BREAKER
+! With the PFD failed or its breaker pulled, the autopilot will not operate.
+# MFD OVERHEAT
+DISPLAY BACKUP ... SELECT
+MFD disagrees with PFD or fails ... PULL MFD BREAKER
+
+=== Autopilot or Electric Trim Malfunction | Emergency/Autopilot
+@SUBTITLE AFMS 3 · GFC 700 memory items
+* AP DISC switch ... DEPRESS AND HOLD, GRASP STICK
+* Aircraft attitude ... MAINTAIN / REGAIN CONTROL (STANDBY ATTITUDE)
+* Pitch trim ... RETRIM WITH TRIM WHEEL
+* AP circuit breaker ... PULL
+* AP DISC switch ... RELEASE
+! Do not engage the autopilot or use the electric trim until the fault is fixed. Altitude loss: 200 ft climb / cruise / descent, 115 ft maneuvering, 130 ft approach.
+
+=== Autopilot Annunciations | Emergency/Autopilot
+@SUBTITLE AFMS 3 · GFC 700
+# AP disconnect (red AP flashing)
+AP DISC switch ... DEPRESS & RELEASE
+Pitch trim ... RETRIM WITH TRIM WHEEL
+# Overspeed (yellow MAXSPD)
+Throttle ... REDUCE
+When corrected: vertical mode ... RESELECT IF NEEDED
+# Loss of navigation (yellow VOR / VAPP / GPS / LOC flashing)
+Autopilot ... HDG
+Nav source ... SELECT A VALID SOURCE
+Autopilot ... NAV OR APR
+On an approach ... MISSED APPROACH AS APPLICABLE
+# Flashing yellow mode (mode lost)
+Mode controls ... SELECT ANOTHER MODE
+On an approach ... DISCONNECT OR MISSED APPROACH
+# Preflight test fails (red boxed PFT)
+AFCS circuit breaker ... PULL — DO NOT ENGAGE AP OR TRIM
+
+=== Autopilot Out of Trim | Emergency/Autopilot
+@SUBTITLE AFMS 3 · yellow ↑ELE ↓ELE ←AIL AIL→
+# ↑ELE or ↓ELE persists (more than 5 sec)
+! Do not overpower the autopilot. Expect strong sustained forces in the arrow's direction on disconnect.
+AP DISC switch ... DEPRESS AND HOLD, GRASP STICK
+Aircraft attitude ... MAINTAIN / REGAIN CONTROL
+Pitch trim ... RETRIM WITH TRIM WHEEL
+AFCS circuit breaker ... PULL
+AP DISC switch ... RELEASE
+# ←AIL or AIL→
+Rudder trim ... CENTER SLIP / SKID
+! Observe the maximum fuel imbalance.
+If it remains: control stick ... GRASP FIRMLY, BOTH HANDS
+AP DISC switch ... DEPRESS
+Autopilot ... RE-ENGAGE IF LATERAL TRIM RESTORED
+
+=== Precautionary Landing | Emergency/Landing & Other
+@SUBTITLE AFM 4B.1
+Select landing area · consider wind.
+Overfly the area for obstacles; read the wind from the drift.
+Airspeed ... 73 KIAS
+ATC ... ADVISE
+# On final approach
+Flaps ... LDG
+Safety harnesses ... TIGHTEN
+Touchdown ... LOWEST POSSIBLE AIRSPEED
+# If time remains (fire risk)
+Fuel tank selector ... OFF
+Ignition switch ... OFF
+Master switch (ALT/BAT) ... OFF
+
+=== Defective Tire or Brakes | Emergency/Landing & Other
+@SUBTITLE AFM 3.5.2–3.5.3
+# Defective main-gear tire
+ATC ... ADVISE
+Land on the runway edge on the intact tire's side.
+Land with the intact-tire wing held low.
+Direction ... RUDDER, SUPPORTED BY BRAKE (LOCK WHEEL IF NEEDED)
+# Defective brakes
+Grass landing recommended (shorter roll).
+If time remains: fuel selector OFF · mixture LEAN · ignition OFF · master OFF
+
+=== Flap Failure | Emergency/Landing & Other
+@SUBTITLE AFM 4B.5
+Flap position ... CHECK VISUALLY
+Airspeed ... IN WHITE ARC
+Flap switch ... RE-CHECK ALL POSITIONS
+# Only UP or T/O available
+Approach airspeed ... 73 KIAS
+Flat approach; control speed and descent rate with throttle.
+# Only LDG available
+Normal landing
+
+=== Landing Above Max Landing Weight | Emergency/Landing & Other
+@SUBTITLE AFM 4B.7
+! Applies while the max landing weight is below the takeoff weight (2,407 LB until the strut mod is confirmed).
+Approach speed ... 73 KIAS (2,646 LB) · 71 KIAS (2,535 LB)
+! A hard landing above the max landing weight can damage the landing gear.
+
+=== Spin Recovery | Emergency/Landing & Other
+@SUBTITLE AFM 3.6 · steps 1–4 at once
+* Throttle ... IDLE
+* Rudder ... FULL OPPOSITE SPIN
+* Elevator (stick) ... FULLY FORWARD
+* Ailerons ... NEUTRAL
+Flaps ... UP
+# When rotation has stopped
+Rudder ... NEUTRAL
+Elevator ... PULL CAREFULLY
+Recover to level flight; do not exceed Vne 178.
+
+=== Carbon Monoxide | Emergency/Landing & Other
+@SUBTITLE AFM 3.7.3 · exhaust smell or CO alert
+Cabin heat ... OFF
+Ventilation ... OPEN
+Emergency windows ... OPEN
+Forward canopy ... OPEN (UNLATCH)
+! Fix the source before further flight.
+
+=== Door Warning | Emergency/Landing & Other
+@SUBTITLE AFM 3.7.4 · DOOR warning light
+* Airspeed ... REDUCE IMMEDIATELY
+Canopy ... CHECK VISUALLY
+Rear passenger door ... CHECK VISUALLY
+Airspeed ... BELOW 140 KIAS
+Land ... NEXT SUITABLE AIRFIELD
+! Do not try to lock the rear door in flight.
+
+=== Erroneous Airspeed or Altitude | Emergency/Landing & Other
+@SUBTITLE AFM 4B.9 · static source blocked
+Alternate static source ... OPEN
+Pitot heat ... ON
+Emergency windows ... CLOSE
+
+=== Emergency Exit | Emergency/Landing & Other
+@SUBTITLE AFM 3.7.5
+After a roll-over, exit through the rear door: release its front hinge (placard next to the hinge).
