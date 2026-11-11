@@ -55,13 +55,15 @@ const AIRCRAFT = {
     { f: 'hobbs', tag: 'H', label: 'Hobbs' },
     { f: 'tach', tag: 'T', label: 'Tach' }],
 
-  // Performance (AFM Section 5). Each entry names a chart or table id in POH_CHARTS (charts.js), once traced and
-  // checked against the AFM's printed example by tools/build_charts.js. null = not available yet.
-  perf: { toRun: null, to50: null, climb: null, ldgRun: null, ldg50: null },
+  // Performance, AFM Section 5 (DA 40 AFM Doc. 6.01.01-E Rev 10). Traced charts in tools/charts/*.json, each checked
+  // against the AFM's printed example by tools/build_charts.js. 'id:roll' reads the chart's ground roll.
+  //   5-13 take-off distance (AFM 5.3.6), 5-15 take-off climb (AFM 5.3.7), 5-21 landing distance flaps LDG (AFM 5.3.10).
+  perf: { toRun: '5-13:roll', to50: '5-13', climb: '5-15', ldgRun: '5-21:roll', ldg50: '5-21' },
+  climbSpeed: 66,   // KIAS, take-off climb at 2,535 lb (AFM 5.3.7; pilot decision: 2,535 lb speeds)
   // Chart ids in flight order for Previous / Next on the chart screens, with names for the titles and tiles.
-  chartFlow: [],
-  chartName: {},
-  chartShort: {}
+  chartFlow: ['5-13', '5-15', '5-21'],
+  chartName: { '5-13': 'Take-off distance', '5-15': 'Take-off climb', '5-21': 'Landing distance, flaps LDG' },
+  chartShort: { '5-13': 'Take-off', '5-15': 'Climb', '5-21': 'Landing' }
 };
 
 // What Preflight Planning still needs before it can calculate (each is an AFM or W&B record item).

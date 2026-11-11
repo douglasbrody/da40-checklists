@@ -1,8 +1,8 @@
 // Bump VERSION whenever any app file changes so iPads pick up the update.
 // The cache name is prefixed: the Seneca app (pa34-checklists) shares this origin's cache storage.
 const PREFIX = 'da40-checklists-';
-const VERSION = PREFIX + 'v2';
-const CHARTS = [].map(c => './charts/' + c + '.jpg');   // AFM Section 5 chart scans: keep in step with AIRCRAFT.chartFlow
+const VERSION = PREFIX + 'v3';
+const CHARTS = ['5-13', '5-15', '5-21'].map(c => './charts/' + c + '.png');   // AFM Section 5 chart scans: keep in step with AIRCRAFT.chartFlow
 const FILES = ['./', './index.html', './manifest.webmanifest', './aircraft.js', './defaults.js', './perf.js', './charts.js', './icon-180.png', './icon-512.png'].concat(CHARTS);
 
 self.addEventListener('install', e => {

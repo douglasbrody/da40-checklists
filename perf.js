@@ -18,6 +18,14 @@
 //               guides: [[[lb, out], ...], ...] }          // each guide line, from ref toward lighter weights
 //     wind:   { cal, x:[MPH min, MPH max] (negative = tailwind, only if the chart has tailwind lines), y:[...], ref: 0,
 //               guides: [[[mph, out], ...], ...] }
+//     tail:   (optional, inside wind) { x:[0, max tailwind], guides: [[[kt, out], ...], ...] }: tailwind lines drawn in the
+//             positive direction from the same origins (DA 40 AFM charts); a tailwind is read on these, never extrapolated
+//     obstacle: (optional) { cal, x:[0, 50] (ft), y, ref: 0 | 50, guides } the obstacle-height panel. ref 0: the wind
+//             panel gives the ground roll and this panel the distance over 50 ft (take-off); ref 50: the wind panel
+//             gives the distance over 50 ft and this panel the ground roll (landing). r.value = over 50 ft, r.roll = roll.
+//   lowSafe: true for a climb-rate nomogram (temperature -> weight -> rate of climb, no wind panel): lower is the safe
+//            side, so guide extensions take the lowest reading and answers are rounded down
+//   speedUnit: 'KT' | 'MPH' (labels), titles: { temp, weight, wind, obstacle } (clean-drawing axis titles)
 //   panels (cruise kind = true airspeed, range kind): main: { cal, x:[MPH or statute miles], y:[DA], lines: [{ power: 65,
 //               reserve: true|false (range only), pts: [[x, DA], ...] }], limits: [{ label, pts }] (cruise: full-throttle lines) }
 //   panels (climb kind):
@@ -94,7 +102,7 @@ var PERFCHART = (function () {
     return Math.max(g.yFar + yn - yne, yne > 0 ? g.yFar * yn / yne : -Infinity);
   }
   // Follow the guide lines from (ref, y0) to x. s = how far outside the guide lines, in guide spacings (0 = between).
-  function through(G, y0, x, xRef) {
+  function through(G, y0, x, xRef, lowSafe) {
     if (G.length < 2) return null;
     var i = 0;
     while (i < G.length - 2 && y0 > G[i + 1].y0) i++;
@@ -106,8 +114,11 @@ var PERFCHART = (function () {
       var y = ya + t * (yb - ya);
       if (s > 0) {   // outside the lines: the longest of straight-line, proportional and parallel extension ...
         var yn = gy(N, xx);
-        y = Math.max(y, yn * y0 / N.y0, y0 + yn - N.y0);
-        if (yn <= N.y0) y = Math.min(y, y0);   // ... but never longer than with no correction (lighter / more headwind is never longer)
+        if (lowSafe) y = Math.min(y, yn * y0 / N.y0, y0 + yn - N.y0);   // (a climb rate: the lowest)
+        else {
+          y = Math.max(y, yn * y0 / N.y0, y0 + yn - N.y0);
+          if (yn <= N.y0) y = Math.min(y, y0);   // ... but never longer than with no correction (lighter / more headwind is never longer)
+        }
       }
       return y;
     }
@@ -117,7 +128,7 @@ var PERFCHART = (function () {
     for (var k = 0; k <= 24; k++) { var xx = xRef + (x - xRef) * k / 24, yy = at(xx); if (yy !== null) path.push([xx, yy]); }
     return { y: y, path: path, s: s, above: t > 1 };
   }
-  function follow(panel, y0, x) {
+  function follow(panel, y0, x, lowSafe) {
     var xRef = panel.ref, xEnd = otherEnd(panel, xRef), span = Math.abs(panel.x[1] - panel.x[0]);
     if (Math.abs(x - xRef) < 1e-9) return { y: y0, path: [[xRef, y0]], s: 0 };   // no correction to apply
     var all = panel.guides.map(function (pts) { return guide(panel, pts); }).filter(function (g) { return g.y0 !== null; });
@@ -127,8 +138,8 @@ var PERFCHART = (function () {
       if (g.onFloor || Math.abs(g.far - xEnd) <= 0.01 * span) return;
       for (var d = 1; d < all.length && !g.ext; d++) [all[i - d], all[i + d]].forEach(function (n) { if (!g.ext && n && reach(n) > reach(g) + 1e-9) g.ext = n; });
     });
-    var r = through(all, y0, x, xRef);
-    if (r === null) r = through(all.filter(function (g) { return gy(g, x) !== null; }), y0, x, xRef);   // last resort: only the lines that reach x
+    var r = through(all, y0, x, xRef, lowSafe);
+    if (r === null) r = through(all.filter(function (g) { return gy(g, x) !== null; }), y0, x, xRef, lowSafe);   // last resort: only the lines that reach x
     return r;
   }
   var tick = function (panel) { return lo(panel.y) + 0.04 * (hi(panel.y) - lo(panel.y)); };   // an input mark is at least this tall
@@ -167,7 +178,8 @@ var PERFCHART = (function () {
     if (wt > wMax + W_TOL) return fail(r, 'weight above the chart (' + wMax + ' lb)');
     if (wt > wMax) wt = wMax;
     if (wt < wMin) { notes.push('lighter than the chart: read at ' + wMin + ' lb (safe side)'); wt = wMin; }
-    var fw = follow(W, y1, wt);
+    var LS = !!c.lowSafe;
+    var fw = follow(W, y1, wt, LS);
     if (!fw) return fail(r, 'the weight guide lines do not cover this reading');
     if (fw.s > EXTEND_MAX && fw.above) return fail(r, 'too far above the weight guide lines');
     if (fw.s > EXTEND_NOTE) notes.push('weight guide lines extended (safe side)');
@@ -175,11 +187,29 @@ var PERFCHART = (function () {
     if (wy > hi(W.y) + 1e-9) return fail(r, 'above the top of the chart');
     if (wy <= wFloor + 1e-6) { wy = wFloor; atFloor = true; }
     fw.path = fw.path.map(function (p) { return [p[0], Math.max(p[1], wFloor)]; });   // the drawing never leaves the chart
+    if (!V) {   // a climb nomogram: the weight panel gives the answer (lower is safe)
+      r.chartValue = wy; r.raw = wy * (c.factor > 0 && c.factor < 1 ? c.factor : 1);
+      r.value = Math.floor(r.raw / 10 + 1e-9) * 10;
+      if (r.raw <= 0) { r.noClimb = true; notes.push('cannot climb at this temperature, altitude and weight'); }
+      r.inputs = { oatF: inp.oatF, pa: inp.pa, weight: inp.weight, usedOatF: oat, usedPa: pa, usedWeight: wt };
+      r.segs = [
+        { panel: 'temp', kind: 'input', pts: [[oat, T.y[0]], [oat, y1]] },
+        { panel: 'temp', kind: 'path', pts: [[oat, y1], [T.x[1], y1]] },
+        { bridge: [['temp', T.x[1], y1], ['weight', W.ref, y1]] },
+        { panel: 'weight', kind: 'path', pts: fw.path },
+        { panel: 'weight', kind: 'input', pts: [[wt, W.y[1]], [wt, wy]] },
+        { panel: 'weight', kind: 'path', pts: [[wt, wy], [otherEnd(W, W.ref), wy]] }];
+      r.answerAt = ['weight', otherEnd(W, W.ref), wy];
+      r.mid = { y1: y1 };
+      if (paBelow && paBelow.pts.length > 1) { r.segs.unshift({ panel: 'temp', kind: 'xcurve', pts: paBelow.pts }); r.paBelow = { pa: paBelow.pa, y: yAt(paBelow.pts, oat) }; }
+      return r;
+    }
     // wind: headwind beyond the chart = use the chart's largest headwind; tailwind is never extrapolated
-    var vMin = lo(V.x), vMax = hi(V.x), wind = inp.wind || 0;
-    if (wind < vMin - 1e-9) return fail(r, vMin >= 0 ? 'tailwind: this chart has no tailwind lines' : 'tailwind beyond the chart');
-    if (wind > vMax) { notes.push('headwind above the chart: read at ' + vMax + ' MPH (safe side)'); wind = vMax; }
-    var fv = follow(V, wy, wind);
+    var SU = c.speedUnit || 'MPH', vMin = V.tail ? -hi(V.tail.x) : lo(V.x), vMax = hi(V.x), wind = inp.wind || 0;
+    if (wind < vMin - 1e-9) return fail(r, vMin >= 0 ? 'tailwind: this chart has no tailwind lines' : 'tailwind beyond the chart (' + (-vMin) + '\u00a0' + SU + ')');
+    if (wind > vMax) { notes.push('headwind above the chart: read at ' + vMax + ' ' + SU + ' (safe side)'); wind = vMax; }
+    var tailP = wind < 0 && V.tail ? { cal: V.cal, _T: V._T, x: V.tail.x, y: V.y, ref: 0, guides: V.tail.guides } : null;
+    var fv = tailP ? follow(tailP, wy, -wind) : follow(V, wy, wind);
     if (!fv) return fail(r, 'the wind guide lines do not cover this reading');
     if (fv.s > EXTEND_MAX && fv.above) return fail(r, 'too far above the wind guide lines');
     if (fv.s > EXTEND_NOTE) notes.push('wind guide lines extended (safe side)');
@@ -187,10 +217,25 @@ var PERFCHART = (function () {
     if (vy > hi(V.y) + 1e-9) return fail(r, 'above the top of the chart');
     if (vy <= vFloor + 1e-6) { vy = vFloor; atFloor = true; }
     fv.path = fv.path.map(function (p) { return [p[0], Math.max(p[1], vFloor)]; });
-    if (atFloor) notes.push('at the bottom of the chart (' + vFloor + ' ft): no further credit (safe side)');
-    r.chartValue = vy;
-    r.raw = vy * (c.factor > 1 ? c.factor : 1);
-    r.value = Math.ceil(r.raw / 10 - 1e-9) * 10;   // distances rounded up
+    if (atFloor) notes.push('at the bottom of the chart (' + th(vFloor) + ' ft): no further credit (safe side)');
+    var xw = tailP ? -wind : wind, xwEnd = tailP ? hi(V.tail.x) : otherEnd(V, V.ref);   // where the wind reading is drawn
+    // obstacle panel: from the wind panel's answer across to the other obstacle height
+    var O = P.obstacle, fo = null, oy = null;
+    if (O) {
+      fo = follow(O, vy, otherEnd(O, O.ref));
+      if (!fo) return fail(r, 'the obstacle guide lines do not cover this reading');
+      if (fo.s > EXTEND_MAX && fo.above) return fail(r, 'too far above the obstacle guide lines');
+      if (fo.s > EXTEND_NOTE) notes.push('obstacle guide lines extended (safe side)');
+      oy = fo.y;
+      if (oy > hi(O.y) + 1e-9) return fail(r, 'above the top of the chart');
+      if (oy < lo(O.y)) oy = lo(O.y);
+    }
+    var d50 = !O ? vy : O.ref === 0 ? oy : vy, roll = !O ? null : O.ref === 0 ? vy : oy;
+    var up = function (v) { return Math.ceil(v / 10 - 1e-9) * 10; };   // distances rounded up
+    r.chartValue = d50;
+    r.raw = d50 * (c.factor > 1 ? c.factor : 1);
+    r.value = up(r.raw);
+    if (roll !== null) { r.rollChart = roll; r.rollRaw = roll * (c.factorRoll > 1 ? c.factorRoll : 1); r.roll = up(r.rollRaw); }
     r.inputs = { oatF: inp.oatF, pa: inp.pa, weight: inp.weight, wind: inp.wind || 0, usedOatF: oat, usedPa: pa, usedWeight: wt, usedWind: wind };
     // drawing path (units per panel) — the lines a pilot draws by hand
     r.segs = [
@@ -202,11 +247,18 @@ var PERFCHART = (function () {
       { panel: 'weight', kind: 'path', pts: [[wt, wy], [otherEnd(W, W.ref), wy]] },
       { bridge: [['weight', otherEnd(W, W.ref), wy], ['wind', V.ref, wy]] },
       { panel: 'wind', kind: 'path', pts: fv.path },                                                  // wind guide
-      { panel: 'wind', kind: 'input', pts: [[wind, V.y[0]], [wind, Math.max(vy, tick(V))]] },
-      { panel: 'wind', kind: 'path', pts: [[wind, vy], [otherEnd(V, V.ref), vy]] }                    // to the scale
+      { panel: 'wind', kind: 'input', pts: [[xw, V.y[0]], [xw, Math.max(vy, tick(V))]] },
+      { panel: 'wind', kind: 'path', pts: [[xw, vy], [otherEnd(V, V.ref), vy]] }                      // to the scale
     ];
     r.answerAt = ['wind', otherEnd(V, V.ref), vy];
     r.mid = { y1: y1, wy: wy, vy: vy };   // the values between panels, for the labels
+    if (O) {
+      r.segs.push({ bridge: [['wind', otherEnd(V, V.ref), vy], ['obstacle', O.ref, vy]] });
+      r.segs.push({ panel: 'obstacle', kind: 'path', pts: fo.path.map(function (p) { return [p[0], Math.max(p[1], lo(O.y))]; }) });
+      r.answerAt = ['obstacle', otherEnd(O, O.ref), oy];
+      r.mid.oy = oy;
+    }
+    if (xwEnd !== otherEnd(V, V.ref)) r.mid.tail = true;
     if (paBelow && paBelow.pts.length > 1) {   // drawn first, under the reading
       r.segs.unshift({ panel: 'temp', kind: 'xcurve', pts: paBelow.pts });
       r.paBelow = { pa: paBelow.pa, y: yAt(paBelow.pts, oat) };
@@ -399,10 +451,10 @@ var PERFCHART = (function () {
     var opt = function (pn, extra) { return Object.assign(bounds(pn), { fs: fs }, extra); };
     if (c.kind !== 'climb' && c.kind !== 'cruise' && c.kind !== 'range') {   // distance charts
       var W = P.weight, V = P.wind, m = r.mid || {};
-      var foot = function (pn, ux) { var q = map(pn, ux, lo(P[pn].y)); return [q[0], q[1] - fs * 1.2]; };
+      var foot = function (pn, ux) { var q1 = map(pn, ux, lo(P[pn].y)), q2 = map(pn, ux, hi(P[pn].y)), q = q1[1] > q2[1] ? q1 : q2; return [q[0], q[1] - fs * 1.2]; };   // the bottom of the panel
       var b = foot('temp', inp.usedOatF); fixed.push(tag(b[0], b[1], degC(inp.oatF) + ' °C · ' + th(inp.oatF) + ' °F', opt('temp', { anchor: 'middle' })));
       b = foot('weight', inp.usedWeight); fixed.push(tag(b[0], b[1], th(inp.weight) + ' LB', opt('weight', { anchor: 'middle' })));
-      b = foot('wind', inp.usedWind); fixed.push(tag(b[0], b[1], (inp.wind < 0 ? 'TW ' : '') + (Math.round(Math.abs(inp.wind) * 10) / 10) + ' MPH', opt('wind', { anchor: 'middle' })));
+      if (V) b = foot('wind', Math.abs(inp.usedWind)); if (V) fixed.push(tag(b[0], b[1], (inp.wind < 0 ? 'TW ' : '') + (Math.round(Math.abs(inp.wind) * 10) / 10) + ' ' + (c.speedUnit || 'MPH'), opt('wind', { anchor: 'middle' })));
       if (m.y1 !== undefined) {
         var q = map('temp', inp.usedOatF, m.y1), pa = 'PA ' + (inp.usedPa === 0 ? 'SL' : th(inp.usedPa)), bt = bounds('temp');
         moving.push(tag(q[0] - fs * 0.5, q[1] - fs * 1.1, pa, opt('temp', { anchor: q[0] - (pa.length * fs * 0.6 + fs) > bt.minX ? 'end' : 'start' })));
@@ -411,11 +463,17 @@ var PERFCHART = (function () {
           moving.push(tag(qb[0] + fs * 0.5, qb[1] + fs * 1.1, pb, opt('temp', { fs: fs * 0.82, dir: 1, cls: 'pc-tag pc-mid', anchor: qb[0] + (pb.length * fs * 0.5 + fs) < bt.maxX ? 'start' : 'end' })));
         }
         if (m.wy !== undefined) { var e1 = map('weight', W.ref, m.y1); moving.push(tag(e1[0] + fs * 0.3, e1[1] - fs * 1.05, th(m.y1), opt('weight', { fs: fs * 0.82, anchor: 'start', cls: 'pc-tag pc-mid' }))); }
-        if (m.vy !== undefined) { var e2 = map('wind', V.ref, m.wy); moving.push(tag(e2[0] + fs * 0.3, e2[1] - fs * 1.05, th(m.wy), opt('wind', { fs: fs * 0.82, anchor: 'start', cls: 'pc-tag pc-mid' }))); }
+        if (V && m.vy !== undefined) { var e2 = map('wind', V.ref, m.wy); moving.push(tag(e2[0] + fs * 0.3, e2[1] - fs * 1.05, th(m.wy), opt('wind', { fs: fs * 0.82, anchor: 'start', cls: 'pc-tag pc-mid' }))); }
+      }
+      if (P.obstacle && V && m.vy !== undefined && r.roll !== undefined) {   // the wind panel's answer: ground roll (take-off) or over 50 ft (landing)
+        var e3 = map('wind', otherEnd(V, V.ref), m.vy), lab = (P.obstacle.ref === 0 ? 'ROLL ' + th(r.roll) : '50 FT ' + th(r.value)) + ' FT';
+        moving.push(tag(e3[0] - fs * 0.5, e3[1] - fs * 1.15, lab, opt('wind', { fs: fs * 0.95, anchor: 'end', cls: 'pc-tag pc-ans' })));
       }
       if (r.answerAt && r.value !== null) {   // the answer: inside the last panel, just above the end of the red line
-        var a = map(r.answerAt[0], r.answerAt[1], r.answerAt[2]);
-        moving.push(tag(a[0] - fs * 0.5, a[1] - fs * 1.15, th(r.value) + ' FT', opt('wind', { fs: fs * 1.15, anchor: 'end', cls: 'pc-tag pc-ans' })));
+        var a = map(r.answerAt[0], r.answerAt[1], r.answerAt[2]), ap = r.answerAt[0];
+        if (ap === 'obstacle') { a = [map('wind', otherEnd(V, V.ref), r.answerAt[2])[0], a[1]]; ap = 'wind'; }   // the obstacle panel is too narrow for the tag
+        var al = P.obstacle ? (P.obstacle.ref === 0 ? '50 FT ' + th(r.value) : 'ROLL ' + th(r.roll)) + ' FT' : th(r.value) + ' ' + String(c.unit || 'ft').toUpperCase();
+        moving.push(tag(a[0] - fs * 0.5, a[1] - fs * 1.15, al, opt(ap, { fs: fs * 1.15, anchor: 'end', cls: 'pc-tag pc-ans' })));
       }
     } else if (c.kind === 'cruise' || c.kind === 'range') {
       var Mp = P.main, mlp = bounds('main').minX, dp = map('main', Mp.x[0], inp.usedDa), dEndp = r.answerAt ? map('main', r.chartValue, inp.usedDa)[0] : bounds('main').maxX;
@@ -466,7 +524,7 @@ var PERFCHART = (function () {
   // pressure-altitude curves, guide lines and climb lines, and the reading. Colours come from the page (CSS variables).
   function layout(c) {
     if (c._L) return c._L;
-    var P = c.panels, names = c.kind === 'climb' ? ['main', 'speed'] : c.kind === 'cruise' || c.kind === 'range' ? ['main'] : ['temp', 'weight', 'wind'], base = P[names[0]], box = {};
+    var P = c.panels, names = c.kind === 'climb' ? ['main', 'speed'] : c.kind === 'cruise' || c.kind === 'range' ? ['main'] : P.obstacle ? ['temp', 'weight', 'wind', 'obstacle'] : P.wind ? ['temp', 'weight', 'wind'] : ['temp', 'weight'], base = P[names[0]], box = {};
     names.forEach(function (n) {
       var p = P[n]; if (!p) return;
       var a = toPx(p, p.x[0], lo(p.y)), b = toPx(p, p.x[1], lo(p.y));
@@ -477,7 +535,7 @@ var PERFCHART = (function () {
       if (A && B && Math.abs(B.left - A.right) < 60) { var mid = (A.right + B.left) / 2; A.right = mid; B.left = mid; }
     }
     var y0 = lo(base.y), y1 = hi(base.y), bottom = toPx(base, base.x[0], y0)[1], top = toPx(base, base.x[0], y1)[1];
-    var L = { names: names.filter(function (n) { return box[n]; }), box: box, bottom: bottom, top: top };
+    var L = { names: names.filter(function (n) { return box[n]; }), box: box, bottom: Math.max(bottom, top), top: Math.min(bottom, top) };   // (a rate-of-climb scale runs downward)
     L.Y = function (uy) { return bottom - (uy - y0) / (y1 - y0) * (bottom - top); };
     L.map = function (pn, ux, uy) { var bx = box[pn]; return [bx.left + (ux - bx.xl) / (bx.xr - bx.xl) * (bx.right - bx.left), L.Y(uy)]; };
     c._L = L; return L;
@@ -486,14 +544,15 @@ var PERFCHART = (function () {
   function grid(c, pn) {
     var p = c.panels[pn], xa = lo(p.x), xb = hi(p.x), ya = lo(c.kind === 'climb' ? c.panels.main.y : p.y), yb = hi(p.y), span = yb - ya, g = {};
     if (pn === 'temp') { g.xs = steps(xa, xb, 10); g.xl = steps(xa, xb, 20); }
-    else if (pn === 'weight') { g.xs = steps(xa, xb, 200); g.xl = g.xs.filter(function (w) { return Math.abs((p.ref - w) % 400) < 1e-6; }); }
+    else if (pn === 'weight') { g.xs = steps(xa, xb, 100); g.xl = g.xs.filter(function (w) { return Math.abs(w % 400) < 1e-6; }); }
     else if (pn === 'wind') { g.xs = steps(xa, xb, 5); g.xl = steps(xa, xb, 10); }
+    else if (pn === 'obstacle') { g.xs = [0, 50]; g.xl = [0, 50]; }
     else if (pn === 'speed') { g.xs = steps(xa, xb, 2); g.xl = steps(xa, xb, 10); }
     else if (c.kind === 'cruise') { g.xs = steps(xa, xb, 5); g.xl = steps(xa, xb, 10); }
     else if (c.kind === 'range') { g.xs = steps(xa, xb, 50); g.xl = steps(xa, xb, 100); }
     else { var st = xb - xa > 1000 ? 100 : 50; g.xs = steps(xa, xb, st); g.xl = steps(xa, xb, st * 2); }
     var ys = span > 6000 ? 1000 : span > 1500 ? 200 : span > 1000 ? 100 : 50, yl = span > 6000 ? 2000 : span > 1500 ? 400 : span > 1000 ? 200 : 100;
-    g.ys = steps(ya, yb, ys); g.yl = g.ys.filter(function (v) { return Math.abs((v - ya) % yl) < 1e-6; });
+    g.ys = steps(ya, yb, ys); g.yl = g.ys.filter(function (v) { return Math.abs(v % yl) < 1e-6; });   // round numbers on the scale
     return g;
   }
   var TITLE = { temp: 'OUTSIDE AIR TEMPERATURE — °F', weight: 'GROSS WEIGHT — LB', wind: 'HEADWIND — MPH', main: 'RATE OF CLIMB — FT/MIN', speed: 'BEST RATE — MPH' };
@@ -505,7 +564,7 @@ var PERFCHART = (function () {
     var text = function (x, y, t, cls, anchor, rot) { return '<text class="' + cls + '" x="' + f1(x) + '" y="' + f1(y) + '" text-anchor="' + (anchor || 'middle') + '"' + (rot ? ' transform="rotate(' + rot + ' ' + f1(x) + ' ' + f1(y) + ')"' : '') + ' font-size="' + f1(fs * (cls === 'pc-ttl' ? 0.82 : 0.9)) + '">' + xmlText(t) + '</text>'; };
     var minX = Infinity, maxX = -Infinity;
     L.names.forEach(function (pn) {
-      var p = P[pn], bx = L.box[pn], g = grid(c, pn), yTop = L.Y(hi(p.y)), yBot = L.Y(lo(climb ? P.main.y : p.y));
+      var p = P[pn], bx = L.box[pn], g = grid(c, pn), yA = L.Y(hi(p.y)), yB = L.Y(lo(climb ? P.main.y : p.y)), yTop = Math.min(yA, yB), yBot = Math.max(yA, yB);
       minX = Math.min(minX, bx.left); maxX = Math.max(maxX, bx.right);
       var cid = 'pcc-' + String(c.id).replace(/\W/g, '') + '-' + pn, inner = [];
       out.push('<clipPath id="' + cid + '"><rect x="' + f1(bx.left) + '" y="' + f1(yTop) + '" width="' + f1(bx.right - bx.left) + '" height="' + f1(yBot - yTop) + '"/></clipPath>');
@@ -518,7 +577,7 @@ var PERFCHART = (function () {
         if (climb ? (!first && Math.abs(x - bx.left) < fs * 1.5) : (!last && Math.abs(x - bx.right) < fs)) return;   // one number per shared border, as printed
         out.push(text(x, yBot + fs * 1.05, th(v), 'pc-tick'));
       });
-      out.push(text((bx.left + bx.right) / 2, yBot + fs * (climb ? 2.25 : 3.3), pn === 'main' && c.kind === 'cruise' ? 'TRUE AIRSPEED — MPH' : pn === 'main' && c.kind === 'range' ? 'RANGE — STATUTE MILES' : TITLE[pn], 'pc-ttl'));
+      out.push(text((bx.left + bx.right) / 2, yBot + fs * (climb ? 2.25 : 3.3), pn === 'main' && c.kind === 'cruise' ? 'TRUE AIRSPEED — MPH' : pn === 'main' && c.kind === 'range' ? 'RANGE — STATUTE MILES' : (c.titles && c.titles[pn]) || TITLE[pn], 'pc-ttl'));
       if (pn === 'temp') [-10, 0, 10, 20, 30].forEach(function (cv) {   // °C under the °F scale: a tick every 10 °C, a number every 20 °C (room for them)
         var x = map(pn, cv * 1.8 + 32, 0)[0]; out.push('<line class="pc-frame" x1="' + f1(x) + '" y1="' + f1(yBot) + '" x2="' + f1(x) + '" y2="' + f1(yBot + fs * 0.3) + '"/>');
         if (cv % 20) out.push(text(x, yBot + fs * 2.1, (cv < 0 ? '−' : '') + Math.abs(cv) + ' °C', 'pc-tick pc-c'));
@@ -530,7 +589,8 @@ var PERFCHART = (function () {
         });
         out.push(text(bx.left - fs * 0.35, yTop - fs * 0.5, 'PA (FT)', 'pc-ttl', 'end'));
       }
-      if (pn === 'weight' || pn === 'wind') p.guides.forEach(function (gd) { inner.push(line(gd, pn, 'pc-guide')); });
+      if (pn === 'weight' || pn === 'wind' || pn === 'obstacle') p.guides.forEach(function (gd) { inner.push(line(gd, pn, 'pc-guide')); });
+      if (pn === 'wind' && p.tail) p.tail.guides.forEach(function (gd) { inner.push(line(gd, pn, 'pc-guide pc-dash')); });
       var rotLabel = function (pts, frac, lab, cls, below) {   // a label along a line, kept clear of by the tags
         var k = Math.min(pts.length - 2, Math.max(0, Math.floor(pts.length * frac))), a = map(pn, pts[k][0], pts[k][1]), b = map(pn, pts[k + 1][0], pts[k + 1][1]);
         var mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, ang = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI; if (ang > 90) ang -= 180; if (ang < -90) ang += 180;
@@ -588,7 +648,7 @@ var PERFCHART = (function () {
       out.push('<rect class="pc-frame" x="' + f1(bx.left) + '" y="' + f1(yTop) + '" width="' + f1(bx.right - bx.left) + '" height="' + f1(yBot - yTop) + '"/>');
     });
     if (!climb) {   // distance scale on the right, as printed
-      var V = P.wind, gv = grid(c, 'wind'), xr = L.box.wind.right;
+      var lastP = L.names[L.names.length - 1], V = P[lastP], gv = grid(c, lastP), xr = L.box[lastP].right;
       gv.yl.forEach(function (v) { out.push(text(xr + fs * 0.35, L.Y(v) + (v > lo(V.y) ? fs * 0.32 : -fs * 0.15), th(v), 'pc-tick', 'start')); });   // every scale number is always shown
       out.push(text(xr - fs * 0.3, L.top - fs * 0.55, c.yTitle || 'DISTANCE — FT', 'pc-ttl', 'end'));
     }

@@ -8,20 +8,28 @@ const IDS = fs.readdirSync(path.join(__dirname, 'charts')).filter(f => /\.json$/
 const out = {};
 for (const id of IDS) {
   const c = JSON.parse(fs.readFileSync(path.join(__dirname, 'charts', id + '.json'), 'utf8'));
-  delete c.factor; delete c.factorNote;
+  delete c.factor; delete c.factorNote; delete c.factorRoll; delete c.factorRollNote;
   if (!c.panels) { out[id] = c; console.log(id.padEnd(5), 'table'); continue; }   // a table, not a chart
-  c.img = 'charts/' + id + '.jpg';
+  if (!c.img || !fs.existsSync(path.join(root, c.img))) throw new Error(id + ': chart image missing: ' + c.img);
   // c.yTitle (the answer axis title) is set in the chart's JSON.
   if (c.panels && !c.example) throw new Error(id + ': every AFM chart must carry its printed example (brief rule 4)');
   const ex = c.example, r = PC.read(JSON.parse(JSON.stringify(c)), ex), raw = r.raw;
   if (raw === null) throw new Error(id + ': the printed example does not read');
-  const climb = c.kind === 'climb', f = ex.answer / raw;
+  const climb = c.kind === 'climb' || !!c.lowSafe, f = ex.answer / raw;
   const rounded = climb ? Math.floor(raw / 10 + 1e-9) * 10 : Math.ceil(raw / 10 - 1e-9) * 10;   // as the app shows it
   if (climb ? rounded > ex.answer : rounded < ex.answer) {   // a factor only where rounding alone does not give the AFM example
     c.factor = f;
     if (Math.abs(f - 1) >= 0.01) c.factorNote = 'Readings ×' + f.toFixed(3) + ' so this chart gives the AFM example (' + ex.answer + (climb ? ' fpm' : ' ft') + '; the traced lines give ' + Math.round(raw) + ')';
   }
+  if (ex.roll !== undefined) {   // the printed ground roll (take-off and landing charts with an obstacle panel)
+    const rr = r.rollChart, fr = ex.roll / rr;
+    if (Math.ceil(rr / 10 - 1e-9) * 10 < ex.roll) {
+      c.factorRoll = fr;
+      if (Math.abs(fr - 1) >= 0.01) c.factorRollNote = 'Ground roll ×' + fr.toFixed(3) + ' so this chart gives the AFM example (' + ex.roll + ' ft; the traced lines give ' + Math.round(rr) + ')';
+    }
+  }
   const chk = PC.read(JSON.parse(JSON.stringify(c)), ex);
+  if (ex.roll !== undefined) console.log(id.padEnd(5), 'example roll', ex.roll, 'traced', r.rollChart.toFixed(1), 'factor', (c.factorRoll || 1).toFixed(4), '->', chk.roll);
   const err = (chk.raw - ex.answer) / ex.answer * 100;
   console.log(id.padEnd(5), 'example', ex.answer, 'traced', raw.toFixed(1), 'factor', (c.factor || 1).toFixed(4), '->', chk.value, '(' + (err >= 0 ? '+' : '') + err.toFixed(2) + '%)', chk.speed ? 'speed ' + chk.speed + ' (POH ' + ex.speed + ')' : '');
   out[id] = c;

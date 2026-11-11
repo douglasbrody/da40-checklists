@@ -532,7 +532,7 @@
 
 const COLORS = ['#1e5bd8', '#138a4a', '#d9730d', '#6b3fc7', '#0f7f8a', '#c62828', '#4a4f57', '#a37800'];
 const COLOR_NAMES = { '#1e5bd8': 'Blue', '#138a4a': 'Green', '#d9730d': 'Orange', '#6b3fc7': 'Purple', '#0f7f8a': 'Teal', '#c62828': 'Red', '#4a4f57': 'Gray', '#a37800': 'Gold' };
-const APP_VERSION = 2;
+const APP_VERSION = 3;
 
 /* ---------- Storage ---------- */
 const KEY = 'checklists.v1', THEME_KEY = 'theme.v1';
@@ -1395,13 +1395,17 @@ function planPerf() {
   P.aoatC = aoatC; P.aoatF = aoatC * 1.8 + 32; P.apa = apa; P.aw = planWind('arr');
   const to = { oatC: oatC, oatF: P.oatF, pa: pa, weight: W.tow, wind: P.dw.kt }, ld = { oatC: aoatC, oatF: P.aoatF, pa: apa, weight: W.lw, wind: P.aw.kt };
   const rd = (key, inp) => {
-    const id = AIRCRAFT.perf[key];
-    if (!id) return { id: null, value: null, pending: true, notes: ['AFM Section 5 data not entered yet'] };
+    const ref = AIRCRAFT.perf[key];
+    if (!ref) return { id: null, value: null, pending: true, notes: ['AFM Section 5 data not entered yet'] };
+    const id = ref.split(':')[0], roll = /:roll$/.test(ref);
     if (!C[id]) return { id: id, value: null, notes: ['chart ' + id + ' missing'], outOfRange: true };
-    return Object.assign(PERFCHART.read(C[id], inp), { id: id, inp: inp });
+    const r = Object.assign(PERFCHART.read(C[id], inp), { id: id, inp: inp });
+    if (roll) { r.isRoll = true; r.value = r.roll === undefined ? null : r.roll; }   // the chart's ground roll
+    return r;
   };
   P.res.toRun = rd('toRun', to); P.res.to50 = rd('to50', to);
-  P.res.climb = rd('climb', { da: P.da, oatC: oatC, pa: pa, weight: W.tow });
+  P.res.climb = rd('climb', { oatC: oatC, oatF: P.oatF, pa: pa, weight: W.tow });
+  if (P.res.climb && P.res.climb.value !== null && AIRCRAFT.climbSpeed) P.res.climb.speed = AIRCRAFT.climbSpeed;
   P.res.ldgRun = rd('ldgRun', ld); P.res.ldg50 = rd('ldg50', ld);
   P.ra = toraFeet();
   P.lra = pnum('plan.ldglen') || 0;   // only a length entered for the landing runway (the app does not know airports)
@@ -1568,15 +1572,15 @@ const NAV_PH = '<span class="next-tile chart-nav nav-ph" aria-hidden="true"></sp
 function renderPlanChart(id) {
   const P = planNow ? planNow.P : planPerf(), C = typeof POH_CHARTS !== 'undefined' ? POH_CHARTS : {}, c = C[id];
   let r = null, key = null;
-  if (P.res) Object.keys(P.res).forEach(k => { if (P.res[k] && P.res[k].id === id) { r = P.res[k]; key = k; } });
+  if (P.res) Object.keys(P.res).forEach(k => { if (P.res[k] && P.res[k].id === id && !P.res[k].isRoll) { r = P.res[k]; key = k; } });
   const ldg = key === 'ldgRun' || key === 'ldg50';
-  if (!r && c && c.panels && !P.missing.length && !P.afm.length) r = Object.assign(PERFCHART.read(c, c.kind === 'climb' ? { da: P.da, oatC: P.oatC, pa: P.pa, weight: P.W.tow } : { oatC: P.oatC, oatF: P.oatF, pa: P.pa, weight: P.W.tow, wind: P.dw.kt }), { id: id });
-  const inp = r && r.inputs ? r.inputs : null, unit = !c ? 'FT' : { climb: 'FPM' }[c.kind] || 'FT';
+  if (!r && c && c.panels && !P.missing.length && !P.afm.length) r = Object.assign(PERFCHART.read(c, { oatC: P.oatC, oatF: P.oatF, pa: P.pa, weight: P.W.tow, wind: P.dw.kt }), { id: id });
+  const inp = r && r.inputs ? r.inputs : null, unit = !c ? 'FT' : String(c.unit || 'ft').toUpperCase();
   const scan = chartView === 'scan';
   let pic = '';
   if (c && c.panels) { try { pic = scan ? `<img src="${esc(c.img)}" alt="AFM chart ${esc(id)} (scan)">${r && r.segs ? PERFCHART.overlay(c, r, {}) : ''}` : PERFCHART.draw(c, inp ? r : null, {}); } catch (e) { pic = `<img src="${esc(c.img)}" alt="AFM chart ${esc(id)} (scan)">`; } }
   const desc = P.afm.length ? 'Weight & balance needs the AFM data first' : P.missing.length ? 'Enter ' + P.missing.join(', ') + ' on Preflight Planning'
-    : c && c.kind === 'climb' ? `Density altitude ${sgn(Math.round(P.da))} FT · ${sgn(P.oatC)} °C · weight ${lbs(P.W.tow)} LB`
+    : c && (c.kind === 'climb' || c.lowSafe) ? `${sgn(P.oatC)} °C · pressure altitude ${sgn(P.pa)} FT · weight ${lbs(P.W.tow)} LB`
     : `${sgn(ldg ? P.aoatC : P.oatC)} °C · pressure altitude ${sgn(ldg ? P.apa : P.pa)} FT · weight ${lbs(ldg ? P.W.lw : P.W.tow)} LB · ${windWords(ldg ? P.aw : P.dw)}`;
   const factor = c && c.factorNote && r && r.value !== null && r.chartValue !== undefined
     ? `<small>chart line ${thousands(Math.round(r.chartValue))} ${unit} × ${c.factor.toFixed(3)}: this chart is scaled to give the AFM's printed example (${thousands(c.example.answer)} ${unit})</small>` : '';
@@ -1591,7 +1595,7 @@ function renderPlanChart(id) {
     </div>
     <h1 class="group-title chart-title">AFM ${esc(id)}${CHART_NAME[id] ? ' · ' + esc(CHART_NAME[id]) : ''}</h1>
     ${c ? `<p class="pmeta"><b>${esc(c.title || '')}</b>${c.conditions ? ' · ' + esc(c.conditions) : ''}</p>
-      <div class="calc"><small>${esc(desc)}</small>${r && r.noClimb ? '<span class="warn">NO CLIMB</span>' : r && r.value !== null && r.value !== undefined ? thousands(r.value) + ' ' + unit + (r.speed ? SEP + 'at ' + r.speed + ' KIAS' : '') : '<span class="warn">NO ANSWER</span>'}${r && r.notes && r.notes.length ? `<small>${esc(r.notes.join(' · '))}</small>` : ''}${factor}</div>
+      <div class="calc"><small>${esc(desc)}</small>${r && r.noClimb ? '<span class="warn">NO CLIMB</span>' : r && r.value !== null && r.value !== undefined ? (r.roll !== undefined ? 'over 50 ft ' : '') + thousands(r.value) + ' ' + unit + (r.roll !== undefined ? SEP + 'ground roll ' + thousands(r.roll) + ' FT' : '') + (r.speed ? SEP + 'at ' + r.speed + ' KIAS' : '') : '<span class="warn">NO ANSWER</span>'}${r && r.notes && r.notes.length ? `<small>${esc(r.notes.join(' · '))}</small>` : ''}${factor}</div>
       ${c.panels ? `<div class="prow chartview"><div class="plab">${scan ? 'The AFM page (scan)' : 'Redrawn from the AFM chart'}<small class="pnote">${scan ? 'the original page' : 'the traced lines the numbers come from; compare with the AFM scan'}</small></div>${toggle('chartview', [['clean', 'Clean'], ['scan', 'AFM scan']], scan ? 'scan' : 'clean')}</div>
       <div class="chartbox${scan ? '' : ' clean'}"><div class="chartin">${pic}</div></div>${typeof window !== 'undefined' && window.innerWidth < 600 ? '<p class="pmeta">Swipe the chart sideways to see all of it.</p>' : ''}` : ''}`
       : `<p class="pmeta"><span class="warn">${typeof PERFCHART === 'undefined' || typeof POH_CHARTS === 'undefined' ? 'The AFM charts did not load. Open the app once with internet to finish the offline copy.' : 'This chart is not available.'}</span></p>`}
@@ -1992,7 +1996,7 @@ function renderManage() {
 }
 
 // the files the app needs in airplane mode (sw.js caches them)
-const OFFLINE_FILES = ['./', 'index.html', 'aircraft.js', 'defaults.js', 'perf.js', 'charts.js'].concat(AIRCRAFT.chartFlow.filter(c => typeof POH_CHARTS !== 'undefined' && POH_CHARTS[c] && POH_CHARTS[c].panels).map(c => 'charts/' + c + '.jpg'));   // keep in step with sw.js
+const OFFLINE_FILES = ['./', 'index.html', 'aircraft.js', 'defaults.js', 'perf.js', 'charts.js'].concat(AIRCRAFT.chartFlow.filter(c => typeof POH_CHARTS !== 'undefined' && POH_CHARTS[c] && POH_CHARTS[c].img).map(c => POH_CHARTS[c].img));   // keep in step with sw.js
 let draft = null;
 function renderEditor(id) {
   if (!draft || draft.id !== id) {
