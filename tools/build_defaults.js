@@ -3,7 +3,7 @@
 // (printed by this script) to KNOWN_SIGS in index.html, so devices with unedited checklists update automatically.
 'use strict';
 const fs = require('fs'), path = require('path');
-const DEFAULTS_VERSION = 2;
+const DEFAULTS_VERSION = 3;
 const COLORS = { 'Preflight': '#4a4f57', 'Start & Taxi': '#1e5bd8', 'Flight': '#138a4a', 'After Landing': '#6b3fc7', 'Emergency': '#c62828' };
 const src = fs.readFileSync(path.join(__dirname, 'checklists.txt'), 'utf8').split('\n');
 const out = []; let cur = null;

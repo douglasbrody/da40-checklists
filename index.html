@@ -532,7 +532,7 @@
 
 const COLORS = ['#1e5bd8', '#138a4a', '#d9730d', '#6b3fc7', '#0f7f8a', '#c62828', '#4a4f57', '#a37800'];
 const COLOR_NAMES = { '#1e5bd8': 'Blue', '#138a4a': 'Green', '#d9730d': 'Orange', '#6b3fc7': 'Purple', '#0f7f8a': 'Teal', '#c62828': 'Red', '#4a4f57': 'Gray', '#a37800': 'Gold' };
-const APP_VERSION = 3;
+const APP_VERSION = 4;
 
 /* ---------- Storage ---------- */
 const KEY = 'checklists.v1', THEME_KEY = 'theme.v1';
@@ -561,7 +561,7 @@ function freshDefaults() {
 // Checklist content updates: a device whose checklists match a published default set (i.e. were
 // never edited) picks up new defaults automatically. Edited checklists are never overwritten.
 const VER_KEY = 'defaults.version', DSIG_KEY = 'defaults.sig', IDMAP_KEY = 'idmap.v1';
-const KNOWN_SIGS = ['d7984734'];   // add the previous DEFAULTS_VERSION's signature here at every bump
+const KNOWN_SIGS = ['d7984734', '9c25d86'];   // add the previous DEFAULTS_VERSION's signature here at every bump
 const isPristine = ls => { const s = sig(ls); return s === read(DSIG_KEY, '') || KNOWN_SIGS.includes(s); };
 let lists = read(KEY, null);
 function applyDefaults() {
@@ -574,6 +574,24 @@ function applyDefaults() {
 }
 if (!Array.isArray(lists) || (read(VER_KEY, 1) !== DEFAULTS_VERSION && isPristine(lists))) applyDefaults();
 // One-time migrations for edited checklists go here (pattern: moveStartTimes() / takeoffLineup() in the Seneca app).
+// Checklists v3: Run-Up flaps and trim checks moved to after Alternate air (pilot, 18 Nov 2026). Applied once to an
+// edited Run-Up too, only if both lines are still before Alternate air; nothing else in the checklist is touched.
+(function runupFlapsTrim() {
+  const FLAG = 'mig.runupFlapsTrim'; if (read(FLAG, false)) return;
+  const l = Array.isArray(lists) && lists.find(x => normTitle(x.title) === 'run-up');
+  if (l) {
+    const lines = l.text.split('\n'), n = s => s.trim().toLowerCase().replace(/\s+/g, ' ');
+    const iF = lines.findIndex(s => /^flaps \.\.\./.test(n(s))), iT = lines.findIndex(s => /^trim \.\.\./.test(n(s)));
+    const iA = lines.findIndex(s => /^alternate air \.\.\./.test(n(s)));
+    if (iF >= 0 && iT >= 0 && iA >= 0 && iF < iA && iT < iA) {
+      const moved = [lines[iF], lines[iT]], rest = lines.filter((s, i) => i !== iF && i !== iT);
+      rest.splice(rest.findIndex(s => /^alternate air \.\.\./.test(n(s))) + 1, 0, ...moved);
+      l.text = rest.join('\n'); write(KEY, lists);
+      if (read(VER_KEY, 1) === DEFAULTS_VERSION) write(DSIG_KEY, sig(lists));
+    }
+  }
+  write(FLAG, true);
+})();
 const updateWaiting = () => read(VER_KEY, 1) !== DEFAULTS_VERSION;
 let theme = read(THEME_KEY, 'day');
 function saveLists() { if (!write(KEY, lists)) alert('Could not save. Storage may be full or disabled.'); }

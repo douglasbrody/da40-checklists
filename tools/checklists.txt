@@ -231,8 +231,6 @@ Fuel tank selector ... FULLEST TANK
 Engine instruments ... IN GREEN SECTOR
 Circuit breakers ... PRESSED IN
 Fuel pressure ... CHECK / NO MSGS
-Flaps ... SET T/O
-Trim ... CHECK T/O
 Flight controls ... FREE & CORRECT
 Throttle ... 2,000 RPM
 Mixture control lever ... BEST POWER
@@ -241,6 +239,8 @@ RPM lever ... CYCLE 3×
 Engine & electronics ... CHECK ENGINE PAGE
 Throttle ... IDLE, THEN 1,000
 Alternate air ... CHECK CLOSED
+Flaps ... SET T/O
+Trim ... CHECK T/O
 Landing light ... ON AS REQUIRED
 Pitot heating ... AS REQUIRED
 Parking brake ... RELEASE

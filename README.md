@@ -2,7 +2,7 @@
 
 Offline checklist viewer for iPad (also iPhone and desktop) for N523LT, a 2008 Diamond DA40 XLS with Garmin G1000 / GFC 700 and PowerFlow exhaust. Built from the PA-34 Seneca app (github.com/douglasbrody/pa34-checklists, v70 / checklists v42). Big tiles, text that resizes to fit the screen, Day / Night / Red modes.
 
-**Status (v3, checklists v2):** checklists, weight & balance and AFM performance are in. Checklist content: the Emergency Checklist Card (2026 11 10) is primary; the DA 40 AFM (Doc. 6.01.01-E Rev 10) and the G1000/GFC 700 AFMS (190-00492-10 Rev 8) fill gaps, and each checklist's subtitle names its source. Edit the content in `tools/checklists.txt` and run `node tools/build_defaults.js` (it checks every EMERGENCY and button target).
+**Status (v4, checklists v3):** checklists, weight & balance and AFM performance are in. Checklist content: the Emergency Checklist Card (2026 11 10) is primary; the DA 40 AFM (Doc. 6.01.01-E Rev 10) and the G1000/GFC 700 AFMS (190-00492-10 Rev 8) fill gaps, and each checklist's subtitle names its source. Edit the content in `tools/checklists.txt` and run `node tools/build_defaults.js` (it checks every EMERGENCY and button target).
 
 **Performance charts (traced from the AFM, checked against each printed example):**
 
