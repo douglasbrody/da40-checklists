@@ -52,6 +52,11 @@
   /* ---------- Home & group screens ---------- */
   /* Full-height screens subtract the safe areas that body already pads for. */
   .home, .page { height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  /* Fixed-layout screens (home, groups, checklists) are pinned to the screen, so iPadOS can't rubber-band or nudge
+     the page on a stray drag (that made the bottom row with the EMERGENCY tile jiggle). Data, Planning and Edit scroll. */
+  html.pinned { overscroll-behavior: none; }
+  html.pinned body { position: fixed; top: 0; right: 0; bottom: 0; left: 0; overflow: hidden; overscroll-behavior: none; }
+  html.pinned #app, html.pinned .home, html.pinned .page { height: 100%; }
   .home { display: flex; flex-direction: column; padding: 14px 16px 16px; }
   .home-head { display: flex; align-items: center; margin: 0 0 14px; flex: none; }
   .home-head > * + * { margin-left: 12px; }
@@ -532,7 +537,7 @@
 
 const COLORS = ['#1e5bd8', '#138a4a', '#d9730d', '#6b3fc7', '#0f7f8a', '#c62828', '#4a4f57', '#a37800'];
 const COLOR_NAMES = { '#1e5bd8': 'Blue', '#138a4a': 'Green', '#d9730d': 'Orange', '#6b3fc7': 'Purple', '#0f7f8a': 'Teal', '#c62828': 'Red', '#4a4f57': 'Gray', '#a37800': 'Gold' };
-const APP_VERSION = 4;
+const APP_VERSION = 5;
 
 /* ---------- Storage ---------- */
 const KEY = 'checklists.v1', THEME_KEY = 'theme.v1';
@@ -2069,6 +2074,8 @@ function route(keepScroll) {
   let gpath = '';
   try { gpath = decodeURIComponent(p.slice(1).join('/')); } catch (e) { gpath = ''; }
   planRefresh();
+  const scrolls = p[0] === 'edit' || p[0] === 'data' || p[0] === 'plan';
+  document.documentElement.classList.toggle('pinned', !scrolls);   // before rendering, so the layout is measured pinned
   if (p[0] === 'list') renderList(p[1]);
   else if (p[0] === 'data') renderData();
   else if (p[0] === 'plan') { if (p[1] === 'chart') renderPlanChart(p[2]); else renderPlan(); }
@@ -2077,7 +2084,7 @@ function route(keepScroll) {
   else renderHome();
   setWake(p[0] !== 'edit');
   if (!keepScroll) { const b = backToPlan && planAt ? goEl(planAt.go) : null; window.scrollTo(0, b ? window.pageYOffset + b.getBoundingClientRect().top - Math.max(0, Math.min(planAt.top, innerHeight - 160)) : backToPlan ? planY : 0); }   // the button stays on screen after a rotation
-  document.body.style.overflow = p[0] === 'edit' || p[0] === 'data' || p[0] === 'plan' ? '' : 'hidden';
+  document.body.style.overflow = scrolls ? '' : 'hidden';
   reloadIfSafe();
 }
 addEventListener('hashchange', () => route());
